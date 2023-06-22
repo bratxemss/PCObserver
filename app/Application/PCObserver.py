@@ -42,8 +42,10 @@ def create_connection():
     except mysql.connector.Error as error:
         return "Error: {}".format(error)
 
+
 def repeat_string(string):
     return string.strip('"')
+
 
 def kill(process_path):
     try:
@@ -61,6 +63,7 @@ def kill(process_path):
                 print(ex)
     except Exception as ex:
         print(ex)
+
 
 def switcher(key):
     connection, cursor = create_connection()
@@ -134,6 +137,7 @@ def is_file_running(file_path):
     print(f"{file_path} OFF")
     return False
 
+
 def get_memory_usage(process_name):
     for proc in psutil.process_iter():
         if proc.name() == process_name:
@@ -182,6 +186,7 @@ def get_file_info(file_path):
         file_info[file]['status'] = 'not running'
     return file_info
 
+
 def search_process(Name): #dontuseble
     process_list = []
     Name = Name.split(".")[0]
@@ -198,6 +203,7 @@ def is_valid_path(path):
         return True
     else:
         return False
+
 
 def is_running(key):
     print("is_running")
@@ -239,6 +245,7 @@ def is_running(key):
     if connection.is_connected():
         # Release the connection back to the pool
         connection.close()
+
 
 def Start_app():
     print("start")
@@ -553,6 +560,7 @@ def check_token(event=None):
     if connection.is_connected:
         # Release the connection back to the pool
         connection.close()
+
 
 def on_close():
     # Perform some action when the window is closed
