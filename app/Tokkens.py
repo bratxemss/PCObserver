@@ -26,7 +26,7 @@ def create_table():
     connection, cursor = create_connection()
     table_name = "user_data_from_tg"
     sql = 'CREATE TABLE IF NOT EXISTS {} (UserID INT NOT NULL UNIQUE PRIMARY KEY, ' \
-          'UserToken CHAR(25) UNIQUE, pc_token CHAR(25), ' \
+          'UserToken CHAR(25) UNIQUE, PCToken CHAR(25), ' \
           'PC_Application_status CHAR(7) DEFAULT "None")'.format(table_name)
     cursor.execute(sql)
     connection.commit()
@@ -52,7 +52,7 @@ def token_generator():
 
 def data_checker(user_id):
     conn, cursor = create_connection()
-    query = "SELECT UserToken, pc_token FROM user_data_from_tg WHERE UserID = %s"
+    query = "SELECT UserToken, PCToken FROM user_data_from_tg WHERE UserID = %s"
     cursor.execute(query, (user_id,))
     result = cursor.fetchone()
     if result:
@@ -76,7 +76,7 @@ def data_checker(user_id):
 
 def user_pc_data(user_id):
     connection, cursor = create_connection()
-    query = "SELECT pc_token FROM user_data_from_tg WHERE UserID = %s"
+    query = "SELECT PCToken FROM user_data_from_tg WHERE UserID = %s"
     cursor.execute(query, (user_id,))
     pc_token = cursor.fetchone()[0]
     table_name = f'PCID_{pc_token}'
