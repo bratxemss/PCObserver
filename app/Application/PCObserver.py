@@ -171,9 +171,9 @@ def get_file_info(file_path):
             fp = os.path.join(path, f)
             file_size += os.path.getsize(fp)
     file_info_size = file_size
-    if file_size >= 1024 and file_size < (1024 ** 2):
+    if 1024 <= file_size < (1024 ** 2):
         file_info[file]['size'] = f"{round(file_info_size / 1024, 2)} KB"
-    elif file_size >= (1024 ** 2) and file_size < (1024 ** 3):
+    elif (1024 ** 2) <= file_size < (1024 ** 3):
         file_info[file]['size'] = f"{round(file_info_size / (1024 ** 2), 2)} MB"
     elif file_size >= (1024 ** 3):
         file_info[file]['size'] = f"{round(file_info_size / (1024 ** 3), 2)} GB"
