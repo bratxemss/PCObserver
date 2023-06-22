@@ -1,0 +1,5 @@
+telebot
+mysql
+customtkinter
+psutil
+pillow
