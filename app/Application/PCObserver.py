@@ -8,7 +8,6 @@ import time
 import win32com.client
 import psutil
 import webbrowser
-import traceback
 from PIL import Image
 
 pool_config = {
