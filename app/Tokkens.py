@@ -7,6 +7,7 @@ user = "d26893_smirnov"
 password = "GxnvlPQL8MA21PfZSRQF"
 database = "d26893_smirnov"
 
+
 def create_connection():
     try:
         connection = mysql.connector.connect(
@@ -20,14 +21,18 @@ def create_connection():
     except mysql.connector.Error as error:
         return 'Error: {}'.format(error)
 
-def Create_table():
+
+def create_table():
     connection, cursor = create_connection()
     table_name = "user_data_from_tg"
-    sql = 'CREATE TABLE IF NOT EXISTS {} (UserID INT NOT NULL UNIQUE PRIMARY KEY, UserToken CHAR(25) UNIQUE, PCToken CHAR(25), PC_Application_status CHAR(7) DEFAULT "None")'.format(table_name)
+    sql = 'CREATE TABLE IF NOT EXISTS {} (UserID INT NOT NULL UNIQUE PRIMARY KEY, ' \
+          'UserToken CHAR(25) UNIQUE, PCToken CHAR(25), ' \
+          'PC_Application_status CHAR(7) DEFAULT "None")'.format(table_name)
     cursor.execute(sql)
     connection.commit()
 
-def TokenGenerator():
+
+def token_generator():
     connection, cursor = create_connection()
     token = None
     while not token:
@@ -42,37 +47,39 @@ def TokenGenerator():
         if result:
             print(f'Generated token {token} already exist in {result}\n generating new token for user {result}')
             token = None
-
     return token
 
 
-def DataChecker(User_Id):
+def data_checker(user_id):
     conn, cursor = create_connection()
     query = "SELECT UserToken, PCToken FROM user_data_from_tg WHERE UserID = %s"
-    cursor.execute(query, (User_Id,))
+    cursor.execute(query, (user_id,))
     result = cursor.fetchone()
     if result:
         user_token, pc_token = result
         if pc_token:
-            print(f"User {User_Id} already has a PC token: {pc_token}")
+            print(f"User {user_id} already has a PC token: {pc_token}")
 
-            return "That is Your token -> "+ user_token +"\nOur system detected that you have a connected PC id -> " + pc_token
+            return "That is Your token -> " + user_token + "\nOur system detected that you " \
+                                                           "have a connected PC id -> " + pc_token
         else:
-            print(f"User {User_Id} already has a token: {user_token}")
-            return "That is Your token -> "+ user_token +"\n⚠⚠You have not yet connected your computer to an account\n Use this link for install ->"
+            print(f"User {user_id} already has a token: {user_token}")
+            return "That is Your token -> " + user_token + "\n⚠⚠You have not yet connected " \
+                                                           "your computer to an account\n Use this link for install ->"
     else:
-        token = TokenGenerator()
+        token = token_generator()
         query = "INSERT INTO user_data_from_tg (UserID, UserToken) VALUES (%s, %s)"
-        cursor.execute(query, (User_Id, token))
+        cursor.execute(query, (user_id, token))
         conn.commit()
         return token
 
-def USER_PC_DATA(User_Id):
+
+def user_pc_data(user_id):
     connection, cursor = create_connection()
     query = "SELECT PCToken FROM user_data_from_tg WHERE UserID = %s"
-    cursor.execute(query, (User_Id,))
-    PCToken = cursor.fetchone()[0]
-    table_name = f'PCID_{PCToken}'
+    cursor.execute(query, (user_id,))
+    pc_token = cursor.fetchone()[0]
+    table_name = f'PCID_{pc_token}'
     try:
         sql = 'SELECT Application, Path, size, memory, Status, Favorite FROM {}'.format(table_name)
         cursor.execute(sql)
@@ -82,30 +89,32 @@ def USER_PC_DATA(User_Id):
             result[row[0]] = {'Path': row[1], 'size': row[2], 'memory': row[3], 'Status': row[4], 'Favorite': row[5]}
         return result
     except mysql.connector.errors.ProgrammingError:
-        print(f'ERROR:{User_Id} have no applications')
+        print(f'ERROR:{user_id} have no applications')
         return False
 
-def PC_Application_status_observer(User_Id):
+
+def pc_application_status_observer(user_id):
     connection, cursor = create_connection()
     query = "SELECT PC_Application_status FROM user_data_from_tg WHERE UserID = %s"
-    cursor.execute(query, (User_Id,))
-    PC_status = cursor.fetchone()[0]
-    if PC_status == "Online":
+    cursor.execute(query, (user_id,))
+    pc_status = cursor.fetchone()[0]
+    if pc_status == "Online":
         return 2
-    elif PC_status == "Offline":
+    elif pc_status == "Offline":
         return 1
     else:
         return 0
 
-def Switch_changer(User_Id, Application):
+
+def switch_changer(user_id, application):
     connection, cursor = create_connection()
     query = "SELECT PCToken FROM user_data_from_tg WHERE UserID = %s"
-    cursor.execute(query, (User_Id,))
-    PCToken = cursor.fetchone()[0]
-    table_name = f'PCID_{PCToken}'
+    cursor.execute(query, (user_id,))
+    pc_token = cursor.fetchone()[0]
+    table_name = f'PCID_{pc_token}'
 
     update_query = f"UPDATE {table_name} SET switcher = 1 WHERE Application = %s"
-    cursor.execute(update_query, (Application,))
+    cursor.execute(update_query, (application,))
     connection.commit()  # Remember to commit the changes
     cursor.close()
     connection.close()

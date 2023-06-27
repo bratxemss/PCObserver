@@ -95,8 +95,8 @@ def switcher(key):
                         update_sql = 'UPDATE {} SET memory=%s WHERE path=%s'.format(table_name)
                         cursor.execute(update_sql, (get_memory_usage(row[0]), row[3],))
                         connection.commit()
-                    except:
-                        print("ERrro")
+                    except Exception as e:
+                        print("Error", e)
 
                     update_sql = 'UPDATE {} SET switcher=0 WHERE path=%s'.format(table_name)
                     cursor.execute(update_sql, (row[3],))
@@ -104,17 +104,17 @@ def switcher(key):
         if connection.is_connected():
             # Release the connection back to the pool
             connection.close()
-    except:
-        pass
+    except Exception as e:
+        print("Error", e)
 
 
-def Main_thread(key):
+def main_thread(key):
     def thread_function():
         global stop_thread
         stop_thread = False
         while not stop_thread:
             switcher(key)
-            time.sleep(2)  # Пауза в 10 секунд
+            time.sleep(2)  # Пауза в 2 секунд
 
     thread = threading.Thread(target=thread_function)
     thread.start()
@@ -171,9 +171,9 @@ def get_file_info(file_path):
             fp = os.path.join(path, f)
             file_size += os.path.getsize(fp)
     file_info_size = file_size
-    if file_size >= 1024 and file_size < (1024 ** 2):
+    if 1024 <= file_size < (1024 ** 2):
         file_info[file]['size'] = f"{round(file_info_size / 1024, 2)} KB"
-    elif file_size >= (1024 ** 2) and file_size < (1024 ** 3):
+    elif (1024 ** 2) <= file_size < (1024 ** 3):
         file_info[file]['size'] = f"{round(file_info_size / (1024 ** 2), 2)} MB"
     elif file_size >= (1024 ** 3):
         file_info[file]['size'] = f"{round(file_info_size / (1024 ** 3), 2)} GB"
@@ -187,14 +187,14 @@ def get_file_info(file_path):
     return file_info
 
 
-def search_process(Name): #dontuseble
+def search_process(name):  # dontuseble
     process_list = []
-    Name = Name.split(".")[0]
+    name = name.split(".")[0]
     for process in psutil.process_iter(['name']):
-        if Name in process.info['name']:
+        if name in process.info['name']:
             process_list.append(process.info['name'])
     for i in process_list:
-        print(f'application{Name} have process as {i}')
+        print(f'application{name} have process as {i}')
     return process_list
 
 
@@ -247,18 +247,16 @@ def is_running(key):
         connection.close()
 
 
-def Start_app():
+def start_app():
     print("start")
-    Main_thread(key)
-    Desktop_files = {}
+    main_thread(key)
+    desktop_files = {}
     your_favorite_list = {}
-
-    # Connect to MySQL database
-
     connection, cursor = create_connection()
     table_name = 'PCID_{}'.format(key)
-    sql = 'CREATE TABLE IF NOT EXISTS {} (Application CHAR(100), Path CHAR(200), size CHAR(100) DEFAULT "0", memory CHAR(100) DEFAULT "0", Status CHAR(20) DEFAULT "offline", switcher SMALLINT DEFAULT 0,Favorite CHAR(50) DEFAULT "No")'.format(
-        table_name)
+    sql = 'CREATE TABLE IF NOT EXISTS {} (Application CHAR(100), Path CHAR(200), ' \
+          'size CHAR(100) DEFAULT "0", memory CHAR(100) DEFAULT "0", Status CHAR(20) ' \
+          'DEFAULT "offline", switcher SMALLINT DEFAULT 0,Favorite CHAR(50) DEFAULT "No")'.format(table_name)
     cursor.execute(sql)
     connection.commit()
     sql = 'SELECT Application, Path, size, memory, Status FROM {}'.format(table_name)
@@ -266,10 +264,10 @@ def Start_app():
     rows = cursor.fetchall()
 
     for row in rows:
-        Application, Path, size, memory, Status = row
-        Desktop_files[Application] = {'path': Path, 'size': size, 'memory': memory, 'status': Status}
+        application, path, size, memory, status = row
+        desktop_files[application] = {'path': path, 'size': size, 'memory': memory, 'status': status}
 
-    sorted_running_exe_files = sorted(Desktop_files.items(), key=lambda item: item[0][0])
+    sorted_running_exe_files = sorted(desktop_files.items(), key=lambda sorted_item: sorted_item[0][0])
     # Select the rows where the Favorite column equals to 'Yes'
     sql = 'SELECT Application, Path, size, memory, Status FROM {} WHERE Favorite = "Yes"'.format(table_name)
     cursor.execute(sql)
@@ -278,8 +276,8 @@ def Start_app():
 
     # Iterate over the rows and store the data in a dictionary
     for row in rows:
-        Application, Path, size, memory, Status = row
-        your_favorite_list[Application] = {'path': Path, 'size': size, 'memory': memory, 'status': Status}
+        application, path, size, memory, status = row
+        your_favorite_list[application] = {'path': path, 'size': size, 'memory': memory, 'status': status}
 
     # Pack the Listbox and Scrollbar side by side
     labelLogin.destroy()
@@ -288,214 +286,209 @@ def Start_app():
     tabview = ctk.CTkTabview(master=Mainframe)
     tabview.add("Application")
     tabview.add("Favorite")
-    InfoFrame = ctk.CTkFrame(master=Mainframe, fg_color="#212121")  # 212121
-    PathFrame = ctk.CTkFrame(tabview.tab("Application"), )  # 212121
+    info_frame = ctk.CTkFrame(master=Mainframe, fg_color="#212121")  # 212121
+    path_frame = ctk.CTkFrame(tabview.tab("Application"), )  # 212121
 
-    button_add_to_Favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12, height=4)
-    button_DELETE = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
-    button_add_to_list = ctk.CTkButton(master=PathFrame, text="Add to list", width=12, height=4)
-    Open_FolderButton = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
+    button_add_to_favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12, height=4)
+    button_delete = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
+    button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
+    open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
 
-    info_label = ctk.CTkLabel(text="", width=5, height=4, master=InfoFrame)
-    Path_Entry = ctk.CTkEntry(master=PathFrame, placeholder_text="Path")
-    filter_Entry = ctk.CTkEntry(tabview.tab("Application"), placeholder_text="Filter")
-    ListOfApps = ctk.CTkOptionMenu(tabview.tab("Application"), values=["Applications"])
+    info_label = ctk.CTkLabel(text="", width=5, height=4, master=info_frame)
+    path_entry = ctk.CTkEntry(master=path_frame, placeholder_text="Path")
+    filter_entry = ctk.CTkEntry(tabview.tab("Application"), placeholder_text="Filter")
+    list_of_apps = ctk.CTkOptionMenu(tabview.tab("Application"), values=["Applications"])
 
     Mainframe.configure(fg_color='#1a1a1a')
     Mainframe.grid(row=1, column=1, columnspan=5, rowspan=5, padx=0, pady=0)
     tabview.grid(row=1, column=1, columnspan=5, rowspan=5, padx=20, pady=20, sticky="nsew")
 
-    InfoFrame.configure(height=100)
+    info_frame.configure(height=100)
     Mainframe.columnconfigure(5, weight=1)
     Mainframe.rowconfigure(5, weight=1)
 
-    ListOfFavoriteApps = ctk.CTkOptionMenu(tabview.tab("Favorite"), values=["Favorite"])
+    list_of_favorite_apps = ctk.CTkOptionMenu(tabview.tab("Favorite"), values=["Favorite"])
 
-    Delete_FavoriteButton = ctk.CTkButton(tabview.tab("Favorite"), text="Delete Favoriite", width=12, height=4)
-    FOpen_FolderButton = ctk.CTkButton(tabview.tab("Favorite"), text="Open path", width=12, height=4)
-    Ffilter_Entry = ctk.CTkEntry(tabview.tab("Favorite"), placeholder_text="Filter")
+    delete_favorite_button = ctk.CTkButton(tabview.tab("Favorite"), text="Delete Favoriite", width=12, height=4)
+    f_open_folder_button = ctk.CTkButton(tabview.tab("Favorite"), text="Open path", width=12, height=4)
+    f_filter_entry = ctk.CTkEntry(tabview.tab("Favorite"), placeholder_text="Filter")
 
-    itemList = []
-    for item in Desktop_files:
-        itemList.append(item)
-    ListOfApps.configure(values=itemList)
+    item_list = []
+    for item in desktop_files:
+        item_list.append(item)
+    list_of_apps.configure(values=item_list)
 
-    FavoriteList = []
+    favorite_list = []
     for item in your_favorite_list:
-        FavoriteList.append(item)
+        favorite_list.append(item)
 
-    ListOfFavoriteApps.configure(values=FavoriteList)
-    ListOfFavoriteApps.grid(row=0, column=5, padx=300)
-    ListOfFavoriteApps.configure(width=200, height=30, corner_radius=10)
+    list_of_favorite_apps.configure(values=favorite_list)
+    list_of_favorite_apps.grid(row=0, column=5, padx=300)
+    list_of_favorite_apps.configure(width=200, height=30, corner_radius=10)
 
-    Ffilter_Entry.grid(row=1, column=5, pady=5, )
+    f_filter_entry.grid(row=1, column=5, pady=5, )
 
-    FOpen_FolderButton.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
-    Delete_FavoriteButton.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
+    f_open_folder_button.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
+    delete_favorite_button.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
 
-    ListOfApps.grid(row=0, column=5, padx=300)
-    ListOfApps.configure(width=200, height=30, corner_radius=10)
-    filter_Entry.grid(row=1, column=5, padx=300)  #########
-    PathFrame.grid(column=5)  #####
-    Open_FolderButton.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
+    list_of_apps.grid(row=0, column=5, padx=300)
+    list_of_apps.configure(width=200, height=30, corner_radius=10)
+    filter_entry.grid(row=1, column=5, padx=300)
+    path_frame.grid(column=5)
+    open_folder_button.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
 
     info_label.grid(row=5, column=3, )
 
-    Path_Entry.grid(row=0, column=1, pady=5, padx=25)
+    path_entry.grid(row=0, column=1, pady=5, padx=25)
 
-    filter_Entry.configure(width=200)
+    filter_entry.configure(width=200)
     button_add_to_list.grid(row=0, column=6, sticky="nsew", pady=10, padx=20)
-    button_add_to_Favorite.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
-    button_DELETE.grid(row=2, column=0, sticky="nsew", pady=10, padx=20)
+    button_add_to_favorite.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
+    button_delete.grid(row=2, column=0, sticky="nsew", pady=10, padx=20)
 
-    Open_FolderButton.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
-                                hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80, height=45)
-    Delete_FavoriteButton.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
-                                    hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
-                                    height=45)
-    button_add_to_list.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+    open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                  hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80, height=45)
-    button_add_to_Favorite.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+    delete_favorite_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                      hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                      height=45)
-    button_DELETE.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
-                            hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80, height=45)
-    FOpen_FolderButton.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+    button_add_to_list.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                  hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80, height=45)
+    button_add_to_favorite.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+                                     hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
+                                     height=45)
+    button_delete.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+                            hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80, height=45)
+    f_open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+                                   hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80, height=45)
 
     is_running(key)
 
     def add_to_favorite(event=None):
         try:
             # Create table for storing information about EXE files
-            table_name = 'PCID_{}'.format(key)
-            exe_file = ListOfApps.get()
+            favorite_table = 'PCID_{}'.format(key)
+            exe_file = list_of_apps.get()
 
-            data = Desktop_files[exe_file]
+            data = desktop_files[exe_file]
             favorites = {"path": data['path'], "size": data['size'], "memory": data['memory'], "status": data['status']}
             if exe_file in your_favorite_list:
                 your_favorite_list[exe_file].update(favorites)
             else:
                 your_favorite_list[exe_file] = favorites
-            sql = 'UPDATE {} SET Favorite = %s WHERE Application = %s'.format(table_name)
+            favorite_sql = 'UPDATE {} SET Favorite = %s WHERE Application = %s'.format(favorite_table)
             print(exe_file)
-            cursor.execute(sql, ("Yes", exe_file))
+            cursor.execute(favorite_sql, ("Yes", exe_file))
             connection.commit()
-            FavoriteList.append(exe_file)
-            ListOfFavoriteApps.configure(values=FavoriteList)
-        except:
-            pass
+            favorite_list.append(exe_file)
+            list_of_favorite_apps.configure(values=favorite_list)
+        except Exception as e:
+            print("Error", e)
 
-    button_add_to_Favorite.configure(command=add_to_favorite)
+    button_add_to_favorite.configure(command=add_to_favorite)
 
-    def open_folder(event=None, ListApp=None):
-        exe_file = ListApp.get()
-        if exe_file in Desktop_files:
-            data = Desktop_files[exe_file]
+    def open_folder(event=None, list_app=None):
+        exe_file = list_app.get()
+        if exe_file in desktop_files:
+            data = desktop_files[exe_file]
             file_path = data['path']
             folder_path = os.path.dirname(file_path)
             subprocess.run(['explorer', folder_path])
         else:
             pass
 
-    Open_FolderButton.configure(command=lambda: open_folder(ListApp=ListOfApps))
-    FOpen_FolderButton.configure(command=lambda: open_folder(ListApp=ListOfFavoriteApps))
+    open_folder_button.configure(command=lambda: open_folder(list_app=list_of_apps))
+    f_open_folder_button.configure(command=lambda: open_folder(list_app=list_of_favorite_apps))
 
     def delete(event=None):
         try:
-            value = ListOfApps.get()
-            itemList.remove(value)
-            ListOfApps.configure(values=["Apps"])
+            value = list_of_apps.get()
+            item_list.remove(value)
+            list_of_apps.configure(values=["Apps"])
             info_label.configure(text="")
-            table_name = 'PCID_{}'.format(key)
-            sql = 'DELETE FROM {} WHERE Application = %s'.format(table_name)
-            cursor.execute(sql, (value,))
+            delete_table_name = 'PCID_{}'.format(key)
+            delete_sql = 'DELETE FROM {} WHERE Application = %s'.format(delete_table_name)
+            cursor.execute(delete_sql, (value,))
             connection.commit()
-            ListOfApps.configure(values=itemList)
-        except:
-            pass
+            list_of_apps.configure(values=item_list)
+        except Exception as e:
+            print("Error", e)
 
-    button_DELETE.configure(command=delete)
+    button_delete.configure(command=delete)
 
-    def deleteFromF(event=None):
+    def delete_from_f(event=None):
         try:
-            value = ListOfFavoriteApps.get()
-            FavoriteList.remove(value)
-            ListOfFavoriteApps.configure(values=["Apps"])
-            table_name = 'PCID_{}'.format(key)
-            sql = 'UPDATE {} SET Favorite = %s WHERE Application = %s'.format(table_name)
-            cursor.execute(sql, ("No", value))
+            value = list_of_favorite_apps.get()
+            favorite_list.remove(value)
+            list_of_favorite_apps.configure(values=["Apps"])
+            favorite_table_name = 'PCID_{}'.format(key)
+            favorite_sql = 'UPDATE {} SET Favorite = %s WHERE Application = %s'.format(favorite_table_name)
+            cursor.execute(favorite_sql, ("No", value))
             connection.commit()
-            ListOfFavoriteApps.configure(values=FavoriteList)
-        except:
-            pass
+            list_of_favorite_apps.configure(values=favorite_list)
+        except Exception as e:
+            print("Error", e)
 
-    Delete_FavoriteButton.configure(command=deleteFromF)
+    delete_favorite_button.configure(command=delete_from_f)
 
-    def show_info(event=None, listApp=None, label=None):
+    def show_info(event=None, list_app=None, label=None):
         try:
-            value = listApp.get()
+            value = list_app.get()
             if value:
-                data = Desktop_files[value]
-                InfoFrame.grid(row=5, column=5, pady=90, sticky="s")  ###
+                data = desktop_files[value]
+                info_frame.grid(row=5, column=5, pady=90, sticky="s")
                 label.configure(
-                    text=f"Name: {value}\nPath: {data['path']}\nSize of path folder: {data['size']}\nMemory: {data['memory']}\nStatus: {data['status']}",
+                    text=f"Name: {value}\nPath: {data['path']}\nSize of path folder: {data['size']}\nMemory: "
+                         f"{data['memory']}\nStatus: {data['status']}",
                     font=("Robot", 18))
         except KeyError:
             pass
 
-    ListOfApps.bind("<Button-1>",
-                    lambda event: window.after(1, lambda: show_info(event, listApp=ListOfApps, label=info_label)))
-    ListOfFavoriteApps.bind("<Button-1>", lambda event: window.after(1, lambda: show_info(event,
-                                                                                          listApp=ListOfFavoriteApps,
-                                                                                          label=info_label)))
+    list_of_apps.bind("<Button-1>",
+                      lambda event: window.after(1, lambda: show_info(event, list_app=list_of_apps, label=info_label)))
+    list_of_favorite_apps.bind("<Button-1>", lambda event: window.after(1, lambda: show_info(event, list_app=list_of_favorite_apps, label=info_label)))
 
     def add(event=None):
         try:
-            file_dict = get_file_info(Path_Entry.get())
+            file_dict = get_file_info(path_entry.get())
             name = list(file_dict.keys())[0]
             info = file_dict[name]
             if is_valid_path(info['path']):
-                path = info['path']
-                size = info['size']
-                memory = info['memory']
-                status = info['status']
-                sql = 'INSERT INTO {} (Application, Path, size, memory, Status) VALUES (%s, %s, %s, %s, %s)'.format(
+                main_path = info['path']
+                main_size = info['size']
+                main_memory = info['memory']
+                main_status = info['status']
+                main_sql = 'INSERT INTO {} (Application, Path, size, memory, Status) VALUES (%s, %s, %s, %s, %s)'.format(
                     table_name)
-                cursor.execute(sql, (name, path, size, memory, status))
+                cursor.execute(main_sql, (name, main_path, main_size, main_memory, main_status))
                 connection.commit()
-                Path_Entry.delete(0, 'end')
-                itemList.append(name)
-                ListOfApps.configure(values=itemList)
-                Desktop_files[name] = {'path': path, 'size': size, 'memory': memory, 'status': status}
+                path_entry.delete(0, 'end')
+                item_list.append(name)
+                list_of_apps.configure(values=item_list)
+                desktop_files[name] = {'path': main_path, 'size': main_size, 'memory': main_memory,
+                                       'status': main_status}
             else:
                 pass
-        except:
-            pass
+        except Exception as e:
+            print("Error", e)
 
-    Path_Entry.bind('<Return>', add)
+    path_entry.bind('<Return>', add)
     button_add_to_list.configure(command=add)
 
-    def filter_listbox(event=None, entry=None, listApp=None):
+    def filter_listbox(event=None, entry=None, list_app=None):
         user_input = entry.get()
-        # Get the current values in the ListOfApps option menu
-        current_values = listApp.cget("values")
-        # Clear the current values in the ListOfApps option menu
-        listApp.configure(values=[])
+        current_values = list_app.cget("values")
+        list_app.configure(values=[])
 
-        # Iterate through all items in the data source and only insert the items that contain the user's input
         filtered_items = []
-        for item in current_values:
-            if user_input.lower() in item.lower():
-                filtered_items.append(item)
-        # update the ListOfApps option menu with filtered items
+        for list_item in current_values:
+            if user_input.lower() in list_item.lower():
+                filtered_items.append(list_item)
         if user_input == "":
-            filtered_items = itemList
-        listApp.configure(values=filtered_items)
+            filtered_items = item_list
+        list_app.configure(values=filtered_items)
 
-    filter_Entry.bind("<KeyRelease>", lambda event: filter_listbox(event=event, entry=filter_Entry, listApp=ListOfApps))
-    Ffilter_Entry.bind("<KeyRelease>",
-                       lambda event: filter_listbox(event=event, entry=Ffilter_Entry, listApp=ListOfFavoriteApps))
+    filter_entry.bind("<KeyRelease>", lambda event: filter_listbox(event=event, entry=filter_entry, list_app=list_of_apps))
+    f_filter_entry.bind("<KeyRelease>", lambda event: filter_listbox(event=event, entry=f_filter_entry, list_app=list_of_favorite_apps))
     return sorted_running_exe_files
 
 
@@ -507,12 +500,10 @@ def update_status(is_online):
     connection.commit()
     cursor.close()
     if connection.is_connected:
-        # Release the connection back to the pool
         connection.close()
 
 
 def check_token(event=None):
-    # Connect to the MySQL database
     if "Error" in create_connection():
         labelLogin.configure(
             text=f'Cant connect to database\n {create_connection()}')
@@ -520,7 +511,6 @@ def check_token(event=None):
     connection, cursor = create_connection()
     # Get the user's input from the Entry widget
     user_input = TgLoginEntry.get()
-    # Execute a SELECT query to retrieve the token and PCToken from the database
     sql = 'SELECT UserToken, PCToken FROM user_data_from_tg WHERE UserToken = %s'
     cursor.execute(sql, (user_input,))
     result = cursor.fetchone()
@@ -537,7 +527,7 @@ def check_token(event=None):
             connection.commit()
             update_status(is_online)
             # Insert new key into the PCID field of the userpcinfo table
-            LoginButton.configure(command=Start_app)
+            LoginButton.configure(command=start_app)
             TgLoginEntry.destroy()
             labelLogin.configure(
                 text=f'You PC ID is {key} You can request your Token again and bot will also give you a PC id')
@@ -545,7 +535,7 @@ def check_token(event=None):
         else:
             # Retrieve the key from the database and store it as a global variable
             key = result[1]
-            LoginButton.configure(command=Start_app)
+            LoginButton.configure(command=start_app)
             update_status(is_online)
             TgLoginEntry.destroy()
             labelLogin.configure(
@@ -555,32 +545,28 @@ def check_token(event=None):
         labelLogin.configure(text="Incorrect Token")
     try:
         checkbox.destroy()
-    except:
-        pass
+    except Exception as e:
+        print("Error", e)
     if connection.is_connected:
         # Release the connection back to the pool
         connection.close()
 
 
 def on_close():
-    # Perform some action when the window is closed
     print("Window closed")
     is_online = False
     try:
         global stop_thread
         stop_thread = True
         update_status(is_online)
-    except:
-        pass
+    except Exception as e:
+        print("Error", e)
     connection, cursor = create_connection()
     if connection.is_connected():
-        # Release the connection back to the pool
         connection.close()
         print("connection closed")
     window.destroy()
 
-
-# main parts
 
 img = ctk.CTkImage(Image.open("ss.png"), size=(100, 70))
 label_IMG = ctk.CTkLabel(master=window, image=img, text="")
