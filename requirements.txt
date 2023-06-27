@@ -1,5 +1,5 @@
 telebot
-mysql
+pymysql
 customtkinter
 psutil
 pillow
