@@ -104,20 +104,13 @@ def start(message):
 
 @bot.callback_query_handler(func=lambda call: call.data in generated_applications)
 def display_application_info(call):
-    # Get the application name from the callback data
     application = call.data
-    # Get the user id from the callback query
     user_id = call.from_user.id
-
-    # Get the application data for the user
     result = user_pc_data(user_id)
-
-    # Get the size, memory, and status for the application
     size = result[application]['size']
     memory = result[application]['memory']
     status = result[application]['Status']
     favorite = result[application]['Favorite']
-    # Create the markup object
     markup = types.InlineKeyboardMarkup()
     # Create the turn off button
 
@@ -125,31 +118,29 @@ def display_application_info(call):
         turn_off_button = types.InlineKeyboardButton("🛑Turn Off", callback_data=f"turn_off_{application}")
         turn_on_button = types.InlineKeyboardButton("✅Turn On❌", callback_data=f"Disabled_button")
     else:
-        turn_off_button = types.InlineKeyboardButton("🛑Turn Off❌", callback_data="Disabled_button")
+        turn_off_button = types.InlineKeyboardButton("🛑Turn Off❌", callback_data=f"Disabled_button")
         turn_on_button = types.InlineKeyboardButton("✅Turn On", callback_data=f"turn_on_{application}")
 
-    @bot.callback_query_handler(func=lambda called: call.data.startswith("turn_on_"))
-    def turn_on_application(called):
-        app_name = called.data.replace("turn_on_", "")
+    @bot.callback_query_handler(func=lambda c: c.data.startswith("turn_on_"))
+    def turn_on_application(c):
+        app_name = c.data.replace("turn_on_", "")
         switch_changer(user_id, app_name)
-        bot.send_message(called.message.chat.id, text=f"Application {app_name} is starting up!")
+        bot.send_message(c.message.chat.id, text=f"Application {app_name} is starting up!")
 
-    @bot.callback_query_handler(func=lambda called: call.data.startswith("turn_off_"))
-    def turn_off_application(called):
-        app_name = called.data.replace("turn_off_", "")
+    @bot.callback_query_handler(func=lambda c: c.data.startswith("turn_off_"))
+    def turn_off_application(c):
+        app_name = c.data.replace("turn_off_", "")
         switch_changer(user_id, app_name)
-        bot.send_message(called.message.chat.id, text=f"Application {app_name} is turning off!")
+        bot.send_message(c.message.chat.id, text=f"Application {app_name} is turning off!")
 
-    @bot.callback_query_handler(func=lambda called: call.data == "Disabled_button")
-    def disabled_button(called):
-        bot.send_message(called.message.chat.id, text="Impossible Function")
+    @bot.callback_query_handler(func=lambda c: c.data == "Disabled_button")
+    def disabled_button(c):
+        bot.send_message(c.message.chat.id, text="Impossible Function")
 
     markup.add(turn_on_button, turn_off_button)
-    # Send the message with the inline keyboard
     bot.send_message(call.message.chat.id,
-                     f"Application: {application}\nSize: {size}\nMemory: {memory}\nStatus:"
-                     f" {status}\nfavorite:{favorite}",
-                     reply_markup=markup)
+                     f"Application: {application}\nSize: {size}\nMemory: {memory}\nStatus: "
+                     f"{status}\nFavorite:{favorite}", reply_markup=markup)
 
 
 bot.polling(none_stop=True, interval=0)
