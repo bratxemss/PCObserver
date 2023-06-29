@@ -1,5 +1,0 @@
-telebot
-mysql-connector-python
-customtkinter
-psutil
-pillow
