@@ -4,9 +4,10 @@ import re
 from pyrogram import Client, filters
 from pyrogram.types import (
     ReplyKeyboardMarkup,
-    KeyboardButton
+    KeyboardButton, ForceReply
 )
 
+from .utils import get_token,connect_to_pc
 
 @Client.on_message(filters.command("help", ["/", ".", "?"]))
 async def helper(client, message):
@@ -24,7 +25,8 @@ async def helper(client, message):
 async def start(client, message):
     markup = ReplyKeyboardMarkup(
         [
-            [KeyboardButton("👋 Начать настройку")],
+            [KeyboardButton("🫡 Create Token")],
+            [KeyboardButton("✅ Connect to PC ✅")]
         ],
         resize_keyboard=True
     )
@@ -43,12 +45,24 @@ async def start(client, message):
 @Client.on_message(
     filters.text &
     (
-        filters.regex(re.compile(r"^👋 Начать настройку$"))
-        | filters.regex(re.compile(r"^🫡 Создать Токен$"))
+        filters.regex(re.compile(r"^🫡 Create Token$"))
+        | filters.regex(re.compile(r"^✅ Connect to PC ✅$"))
     ),
     group=1)
 async def process_operations(client, message):
-    pass
+    gm_id = message.from_user.id
+    if message.text == "🫡 Create Token":
+        await client.send_message(
+            gm_id,
+            await get_token(gm_id),
+        )
+    elif message.text == "✅ Connect to PC ✅":
+        await client.send_message(
+            gm_id,
+            await connect_to_pc(gm_id),
+        )
+    return
+
 
 
 
