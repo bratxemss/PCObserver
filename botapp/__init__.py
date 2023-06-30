@@ -7,7 +7,7 @@ from modconfig import Config
 
 
 class Bot(Client):
-    def __init__(self, *args, env=None, **kwargs):
+    def __init__(self, env=None):
         env = env or os.environ.get("ENV", "develop")
         self.cfg = Config(f"{__name__}.config.{env}")
         self.ENV = env

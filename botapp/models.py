@@ -12,4 +12,4 @@ class Customer(AIOModel):
     pc_status = pw.CharField(null=True)
 
     def __repr__(self):
-        return f"<Customer: {self.phone}>"
+        return f"<Customer: {self.telegram_id}>"
