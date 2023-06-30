@@ -1,6 +1,6 @@
 import os
 
-import uvloop
+# import uvloop
 from peewee_aio.manager import Manager
 from pyrogram import Client
 from modconfig import Config
@@ -22,6 +22,6 @@ class Bot(Client):
         )
 
 
-uvloop.install()
+# uvloop.install()
 
 bot = Bot()
