@@ -12,7 +12,8 @@ class Client(asyncio.Protocol):
         print('Data sent: {!r}'.format(self.message))
 
     def data_received(self, data):
-        print('Data received: {!r}'.format(data.decode()))
+        server_message = '{!r}'.format(data.decode())
+        print(f"Data received: {server_message}")
 
     def connection_lost(self, exc):
         print('The server closed the connection')
@@ -27,14 +28,26 @@ async def main():
     on_con_lost = loop.create_future()
     # message = 'Hello World!'
     import uuid
-    message = {
+    message1 = {
         "command": "register_app",
         "data":
             {
                 "user_id": 1235641635,
                 "application": {
                     "name": "Doom 2016",
-                    "path": "C:\\\\Program files\\app\\app.exe"
+                    "path": "C:/Users/bratx/Desktop/Bread & Fred Demo.url",
+                    "size": 202,
+                    "status": True,
+                }
+            }
+    }
+    message = {
+        "command": "delete_app",
+        "data":
+            {
+                "user_id": 1235641635,
+                "application": {
+                    "id": 1,
                 }
             }
     }

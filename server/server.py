@@ -3,7 +3,7 @@ import json
 from asyncio import StreamReader, StreamWriter
 from uuid import uuid4
 
-from server.models import Customer
+from server.models import Customer, Application
 
 
 class Server:
@@ -23,15 +23,18 @@ class Server:
         print("Message", message)
 
         command = message.get("command", None)
+
         if command:
             if command == "register_user":
                 user_id = message.get("data", {}).get("user_id", None)
-                # TODO: проверять пользователя на существование
-                await Customer.create(
-                    telegram_id=user_id,
-                    user_token=str(uuid4()),
-                    pc_token=str(uuid4())
-                )
+                existing_customer = await Customer.get_or_none(telegram_id=user_id)
+                if not existing_customer:
+                    await Customer.create(
+                        telegram_id=user_id,
+                        user_token=str(uuid4()),
+                        pc_token=str(uuid4())
+
+                    )
                 writer.close()
                 await writer.wait_closed()
 
@@ -56,10 +59,68 @@ class Server:
                 print("Register_app")
                 user_id = message.get("data", {}).get("user_id", None)
                 if user_id:
-                    pass
-                    # создать запись о приложении в таблице Application
-                    # после создания записи о приложении отправить список приложений в ответ
+                    application = message.get("data", {}).get("application", None)
+                    if application:
+                        app_name = application.get("name", "unknown")
+                        app_path = application.get("path", "unknown")
+                        app_size = application.get("size", 0)
+                        app_status = application.get("status", False)
+                        if not await Application.get_or_none(user=user_id) and not await Application.get_or_none(app_path=app_path):
+                            await Application.create(
+                                user=user_id,
+                                app_name=app_name,
+                                app_path=app_path,
+                                app_size=app_size,
+                                app_status=app_status
+                            )
+
+                            user_applications = await Application.filter(user=user_id)
+                            apps_data = []
+                            for app in user_applications:
+                                apps_data.append({
+                                    "id": app.id,
+                                    "name": app.app_name,
+                                    "path": app.app_path,
+                                    "size": app.app_size,
+                                    "status": app.app_status
+                                })
+                            response = {"status": "success", "message": "Application registered successfully",
+                                        "Applications": apps_data}
+                            writer.write(json.dumps(response).encode())
+                        else:
+                            response = {"status": "error", "message": "Application path is already exist in system"}
+                            writer.write(json.dumps(response).encode())
+                    else:
+                        response = {"status": "error", "message": "Invalid application data"}
+                        writer.write(json.dumps(response).encode())
+                else:
+                    response = {"status": "error", "message": "Invalid user_id"}
+                    writer.write(json.dumps(response).encode())
+
                 writer.close()
                 await writer.wait_closed()
+
             elif command == "delete_app":
-                pass
+                print("Deleting_app")
+                user_id = message.get("data", {}).get("user_id", None)
+                if user_id:
+                    app_id = (message.get("data", {}).get("application", None))["id"]
+                    if app_id:
+                        application = await Application.get_or_none(id=app_id)
+                        if application:
+                            await application.delete()
+                            response = {"status": "success", "message": "Application deleted successfully",
+                                        "Application path": app_id}
+                            writer.write(json.dumps(response).encode())
+                        else:
+                            response = {"status": "error", "message": "Application not found"}
+                            writer.write(json.dumps(response).encode())
+                    else:
+                        response = {"status": "error", "message": "Invalid application ID"}
+                        writer.write(json.dumps(response).encode())
+                else:
+                    response = {"status": "error", "message": "Invalid user ID"}
+                    writer.write(json.dumps(response).encode())
+
+                writer.close()
+                await writer.wait_closed()
