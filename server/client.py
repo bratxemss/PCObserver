@@ -28,7 +28,7 @@ async def main():
     on_con_lost = loop.create_future()
     # message = 'Hello World!'
     import uuid
-    message1 = {
+    message = {
         "command": "register_app",
         "data":
             {
@@ -41,7 +41,7 @@ async def main():
                 }
             }
     }
-    message = {
+    message1 = {
         "command": "delete_app",
         "data":
             {
