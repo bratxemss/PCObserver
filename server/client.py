@@ -28,11 +28,14 @@ async def main():
     # message = 'Hello World!'
     import uuid
     message = {
-        "command": "send_command",
+        "command": "register_app",
         "data":
             {
                 "user_id": 1235641635,
-                "execute": {"appname": "Doom 2016", "exec": "stop"}
+                "application": {
+                    "name": "Doom 2016",
+                    "path": "C:\\\\Program files\\app\\app.exe"
+                }
             }
     }
     message = json.dumps(message)

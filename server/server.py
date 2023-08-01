@@ -52,7 +52,14 @@ class Server:
                     await writer.wait_closed()
 
             elif command == "register_app":
-                # регистрируем новое управляемое приложение
-                user_id = message.get("data", {}).get("user_id", None)
-                # проверяем существование приложения в БД, если такого нет, то создаём
+                '''регистрируем новое управляемое приложение'''
                 print("Register_app")
+                user_id = message.get("data", {}).get("user_id", None)
+                if user_id:
+                    pass
+                    # создать запись о приложении в таблице Application
+                    # после создания записи о приложении отправить список приложений в ответ
+                writer.close()
+                await writer.wait_closed()
+            elif command == "delete_app":
+                pass
