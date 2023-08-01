@@ -85,10 +85,21 @@ class Server:
                                     "status": app.app_status
                                 })
                             response = {"status": "success", "message": "Application registered successfully",
-                                        "Applications": apps_data}
+                                        "Applications:": apps_data}
                             writer.write(json.dumps(response).encode())
                         else:
-                            response = {"status": "error", "message": "Application path is already exist in system"}
+                            user_applications = await Application.filter(user=user_id)
+                            apps_data = []
+                            for app in user_applications:
+                                apps_data.append({
+                                    "id": app.id,
+                                    "name": app.app_name,
+                                    "path": app.app_path,
+                                    "size": app.app_size,
+                                    "status": app.app_status
+                                })
+                            response = {"status": "error", "message": "Application path is already exist in system",
+                                        "Applications:": apps_data}
                             writer.write(json.dumps(response).encode())
                     else:
                         response = {"status": "error", "message": "Invalid application data"}
