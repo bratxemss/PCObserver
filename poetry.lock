@@ -504,6 +504,16 @@ files = [
 ]
 
 [[package]]
+name = "sockio"
+version = "0.15.0"
+description = "Concurrency agnostic socket API"
+optional = false
+python-versions = ">=2.7"
+files = [
+    {file = "sockio-0.15.0.tar.gz", hash = "sha256:32eba7eaa0d402bb6fa27188ed7b0e476e49e4aba6276161c1773e37e7070353"},
+]
+
+[[package]]
 name = "tgcrypto"
 version = "1.2.5"
 description = "Fast and Portable Cryptography Extension Library for Pyrogram"
@@ -679,4 +689,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "cf34e655992e315c1643818c39707ca6bf737f1aa5c036bb390dbe6828928b96"
+content-hash = "2b40a5b6b4b8eab96b6cad6b2653402f194f50a1e17f9f070baa4fdcf6afe355"
