@@ -33,10 +33,43 @@ class Server:
                         telegram_id=user_id,
                         user_token=str(uuid4()),
                         pc_token=str(uuid4())
-
                     )
+                info = []
+                information = await Customer.filter(telegram_id=user_id)
+                for app in information:
+                    info.append({
+                        "telegram id": app.telegram_id,
+                        "user token": app.user_token,
+                        "pc token": app.pc_token,
+                    })
+                response = {"status": "success", "message": "User login successfully",
+                            "Information:": info}
+                writer.write(json.dumps(response).encode())
                 writer.close()
                 await writer.wait_closed()
+
+            elif command == "get_info":
+                user_id = message.get("data", {}).get("user_id", None)
+                if user_id:
+                    apps_data = []
+                    user_applications = await Application.filter(user=user_id)
+                    for app in user_applications:
+                        apps_data.append({
+                            "id": app.id,
+                            "name": app.app_name,
+                            "path": app.app_path,
+                            "size": app.app_size,
+                            "status": app.app_status
+                        })
+                    if len(apps_data) == 0:
+                        response = {"status": "error", "message": "Application list is empty"}
+                        writer.write(json.dumps(response).encode())
+                    else:
+                        response = {"status": "success", "message": "Connected successfully",
+                                    "Applications:": apps_data}
+                        writer.write(json.dumps(response).encode())
+                    writer.close()
+                    await writer.wait_closed()
 
             elif command == "connect":
                 user_id = message.get("data", {}).get("user_id", None)
@@ -65,7 +98,7 @@ class Server:
                         app_path = application.get("path", "unknown")
                         app_size = application.get("size", 0)
                         app_status = application.get("status", False)
-                        if not await Application.get_or_none(user=user_id) and not await Application.get_or_none(app_path=app_path):
+                        if not await Application.filter(user=user_id, app_path=app_path).first():
                             await Application.create(
                                 user=user_id,
                                 app_name=app_name,
@@ -73,9 +106,8 @@ class Server:
                                 app_size=app_size,
                                 app_status=app_status
                             )
-
-                            user_applications = await Application.filter(user=user_id)
                             apps_data = []
+                            user_applications = await Application.filter(user=user_id)
                             for app in user_applications:
                                 apps_data.append({
                                     "id": app.id,
@@ -88,8 +120,8 @@ class Server:
                                         "Applications:": apps_data}
                             writer.write(json.dumps(response).encode())
                         else:
-                            user_applications = await Application.filter(user=user_id)
                             apps_data = []
+                            user_applications = await Application.filter(user=user_id)
                             for app in user_applications:
                                 apps_data.append({
                                     "id": app.id,
@@ -107,7 +139,6 @@ class Server:
                 else:
                     response = {"status": "error", "message": "Invalid user_id"}
                     writer.write(json.dumps(response).encode())
-
                 writer.close()
                 await writer.wait_closed()
 
