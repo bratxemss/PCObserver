@@ -1,2 +1,3 @@
-config/local.py
+botapp/config/local.py
 *.sqlite
+notes
