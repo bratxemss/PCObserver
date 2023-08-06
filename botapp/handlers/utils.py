@@ -26,6 +26,7 @@ class Connections:
         await writer.wait_closed()
         return response
 
+
 async def reader(message: dict) -> str:
     unexpected_info = []
     answer = ""

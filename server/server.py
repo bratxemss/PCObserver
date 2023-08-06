@@ -45,6 +45,7 @@ class Server:
                 response = {"status": "success", "message": "User login successfully",
                             "Information:": info}
                 writer.write(json.dumps(response).encode())
+                await writer.drain()
                 writer.close()
                 await writer.wait_closed()
 
@@ -145,24 +146,26 @@ class Server:
             elif command == "delete_app":
                 print("Deleting_app")
                 user_id = message.get("data", {}).get("user_id", None)
-                if user_id:
-                    app_id = (message.get("data", {}).get("application", None))["id"]
-                    if app_id:
-                        application = await Application.get_or_none(id=app_id)
-                        if application:
-                            await application.delete()
-                            response = {"status": "success", "message": "Application deleted successfully",
-                                        "Application path": app_id}
-                            writer.write(json.dumps(response).encode())
-                        else:
-                            response = {"status": "error", "message": "Application not found"}
-                            writer.write(json.dumps(response).encode())
-                    else:
-                        response = {"status": "error", "message": "Invalid application ID"}
-                        writer.write(json.dumps(response).encode())
+                app_id = message.get("data", {}).get("application", {}).get("id")
+                if user_id and app_id:
+                    try:
+                        deleted = (
+                            await Application.delete()
+                            .where(
+                                (Application.id == app_id) & (Application.user_id == user_id)
+                            )
+                            .execute()
+                        )
+                        print(deleted)
+                        response = {"status": "success" if bool(deleted) else "error", "Application path": app_id}
+                    except Exception as e:
+                        print("Error occurred during deletion:", e)
+                        response = {"status": "error", "message": "An error occurred during deletion."}
                 else:
-                    response = {"status": "error", "message": "Invalid user ID"}
-                    writer.write(json.dumps(response).encode())
-
+                    response = {"status": "error", "message": "Invalid data."}
+                writer.write(json.dumps(response).encode())
+                await writer.drain()
                 writer.close()
                 await writer.wait_closed()
+
+
