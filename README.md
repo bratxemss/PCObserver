@@ -19,4 +19,5 @@ poetry install
 3) Init database
 ```sh
 make init_db
+python -m botapp -init_db
 ```
