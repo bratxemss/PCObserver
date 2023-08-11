@@ -26,21 +26,21 @@ async def main():
     loop = asyncio.get_running_loop()
 
     on_con_lost = loop.create_future()
-    # message = 'Hello World!'
     import uuid
-    message = {
-        "command": "register_app",
-        "data":
-            {
-                "user_id": 1235641635,
-                "application": {
-                    "name": "Doom 2016",
-                    "path": "C:/Users/bratx/Desktop/Bread & Fred Demo.url",
-                    "size": 202,
-                    "status": True,
-                }
-            }
-    }
+
+    # message = {
+    #     "command": "register_app",
+    #     "data":
+    #         {
+    #             "user_id": 1235641635,
+    #             "application": {
+    #                 "name": "Doom 2016",
+    #                 "path": "C:/Users/bratx/Desktop/Bread & Fred Demo.url",
+    #                 "size": 202,
+    #                 "status": True,
+    #             }
+    #         }
+    # }
     message1 = {
         "command": "delete_app",
         "data":
@@ -51,8 +51,7 @@ async def main():
                 }
             }
     }
-    message = json.dumps(message)
-
+    message = json.dumps(message1)
     transport, protocol = await loop.create_connection(
         lambda: Client(message, on_con_lost),
         '127.0.0.1', 8000)

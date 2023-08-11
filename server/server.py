@@ -140,6 +140,8 @@ class Server:
                 else:
                     response = {"status": "error", "message": "Invalid user_id"}
                     writer.write(json.dumps(response).encode())
+
+                await writer.drain()
                 writer.close()
                 await writer.wait_closed()
 
@@ -149,14 +151,15 @@ class Server:
                 app_id = message.get("data", {}).get("application", {}).get("id")
                 if user_id and app_id:
                     try:
-                        deleted = (
-                            await Application.delete()
+                        application = (
+                            await Application.select()
                             .where(
-                                (Application.id == app_id) & (Application.user_id == user_id)
+                                Application.id == app_id,
+                                Application.user_id == user_id
                             )
-                            .execute()
+                            .first()
                         )
-                        print(deleted)
+                        deleted = await application.delete_instance()
                         response = {"status": "success" if bool(deleted) else "error", "Application path": app_id}
                     except Exception as e:
                         print("Error occurred during deletion:", e)
@@ -167,5 +170,3 @@ class Server:
                 await writer.drain()
                 writer.close()
                 await writer.wait_closed()
-
-
