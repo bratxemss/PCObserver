@@ -1,36 +1,66 @@
-from uuid import uuid4
+import json
+import asyncio
 
-from botapp.models import Customer
+
+class Connections:
+    def __init__(self, command, data):
+        self.command = command
+        self.data = data
+        self.IP = '127.0.0.1'
+        self.Port = 8000
+
+    def __repr__(self):
+        return f"Info:{self.command, self.data} to {self.IP}:{self.Port}"
+
+    async def connection(self):
+        reader, writer = await asyncio.open_connection(self.IP, self.Port)
+        message = {
+            "command": self.command,
+            "data": self.data
+        }
+        message = json.dumps(message).encode()
+        writer.write(message)
+        await writer.drain()
+        response = (await reader.read(1024)).decode()
+        writer.close()
+        await writer.wait_closed()
+        return response
+
+
+async def reader(message: dict) -> str:
+    unexpected_info = []
+    answer = ""
+    if message.get("message"):
+        answer += f"{message['message']}! "
+    if message.get("status"):
+        if message.get("status") == "success":
+            answer = "✅ " + answer + "✅"
+        elif message.get("status") == "error":
+            answer = "❌ " + answer + "❌"
+    for item, key in message.items():
+        if not item == "message" and not item == "status":
+            if isinstance(key, list):
+                for app in key:
+                    if isinstance(app, dict):
+                        for item2, key2 in app.items():
+                            unexpected_info.append(f"\n{item2}: {key2}")
+                    else:
+                        unexpected_info.append(f"\n-{app}")
+            elif isinstance(key, dict):
+                for item2, key2 in key.items():
+                    unexpected_info.append(f"\n{item2}: {key2}")
+            else:
+                unexpected_info.append(f"{key}")
+            answer += f"\n{item} {' '.join(unexpected_info)} "
+    return answer
 
 
 async def get_token(user_id):
-    customer = await Customer.select().where(Customer.telegram_id == user_id).first()
-    if not customer:
-        customer = await Customer.create(
-            telegram_id=user_id,
-            user_token=str(uuid4())
-        )
-    return f"That is your user token --> {customer.user_token}"
-
-
-async def connect_pc_data(user_id):
-    pass
+    response = await Connections(command="register_user", data={"user_id": user_id}).connection()
+    return await(reader(json.loads(response)))
 
 
 async def connect_to_pc(user_id):
-    customer = await Customer.select().where(Customer.telegram_id == user_id).first()
-    message = ""
-    if not customer:
-        message = f"We did not find you token, if you dont have a token, please create one"
-    elif customer:
-        if not customer.pc_token:
-            message = f"We did not find you PC, make shore that you PC application is enabled and configured properly."
-        else:
-            if customer.pc_status == "Online":
-                message = "Connecting..."
-                await connect_pc_data(user_id)
-            elif customer.pc_status == "Offline":
-                message = "Your application is offline"
-            else:
-                message = "⚠️Is Error appeared while connecting to you data, please message the Customer Service --> ⚠️"
-    return message
+    response = await Connections(command="get_info", data={"user_id": user_id}).connection()
+    return await(reader(json.loads(response)))
+
