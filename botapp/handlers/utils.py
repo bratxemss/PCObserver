@@ -1,5 +1,7 @@
 import json
 import asyncio
+import re
+from pyrogram import filters
 
 
 class Connections:
@@ -27,7 +29,7 @@ class Connections:
         return response
 
 
-async def reader(message: dict) -> str:
+async def reader(message: dict, unexpected_info_need=True) -> str:
     unexpected_info = []
     answer = ""
     if message.get("message"):
@@ -37,22 +39,29 @@ async def reader(message: dict) -> str:
             answer = "✅ " + answer + "✅"
         elif message.get("status") == "error":
             answer = "❌ " + answer + "❌"
-    for item, key in message.items():
-        if not item == "message" and not item == "status":
-            if isinstance(key, list):
-                for app in key:
-                    if isinstance(app, dict):
-                        for item2, key2 in app.items():
-                            unexpected_info.append(f"\n{item2}: {key2}")
-                    else:
-                        unexpected_info.append(f"\n-{app}")
-            elif isinstance(key, dict):
-                for item2, key2 in key.items():
-                    unexpected_info.append(f"\n{item2}: {key2}")
-            else:
-                unexpected_info.append(f"{key}")
-            answer += f"\n{item} {' '.join(unexpected_info)} "
+    if unexpected_info_need:
+        for item, key in message.items():
+            if not item == "message" and not item == "status":
+                if isinstance(key, list):
+                    for app in key:
+                        if isinstance(app, dict):
+                            for item2, key2 in app.items():
+                                unexpected_info.append(f"\n{item2}: {key2}")
+                        else:
+                            unexpected_info.append(f"\n-{app}")
+                elif isinstance(key, dict):
+                    for item2, key2 in key.items():
+                        unexpected_info.append(f"\n{item2}: {key2}")
+                else:
+                    unexpected_info.append(f"{key}")
+                answer += f"\n{item} {' '.join(unexpected_info)} "
     return answer
+
+
+def dynamic_data_filter(data):
+    async def func(flt, _, query):
+        return bool(re.match(flt.data, query.data))
+    return filters.create(func, data=data)
 
 
 async def get_token(user_id):
@@ -62,5 +71,5 @@ async def get_token(user_id):
 
 async def connect_to_pc(user_id):
     response = await Connections(command="get_info", data={"user_id": user_id}).connection()
-    return await(reader(json.loads(response)))
+    return json.loads(response), await(reader(json.loads(response), unexpected_info_need=False))
 

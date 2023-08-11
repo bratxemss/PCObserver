@@ -43,7 +43,7 @@ class Server:
                         "pc token": app.pc_token,
                     })
                 response = {"status": "success", "message": "User login successfully",
-                            "Information:": info}
+                            "Information": info}
                 writer.write(json.dumps(response).encode())
                 await writer.drain()
                 writer.close()
@@ -67,7 +67,7 @@ class Server:
                         writer.write(json.dumps(response).encode())
                     else:
                         response = {"status": "success", "message": "Connected successfully",
-                                    "Applications:": apps_data}
+                                    "Applications": apps_data}
                         writer.write(json.dumps(response).encode())
                     writer.close()
                     await writer.wait_closed()
