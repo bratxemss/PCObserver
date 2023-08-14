@@ -6,7 +6,6 @@ from asyncio import StreamReader, StreamWriter
 from server.models import Customer, Application
 from server.utils import get_users_apps
 
-
 logger = logging.getLogger("commands handlers")
 
 

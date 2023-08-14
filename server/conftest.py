@@ -2,12 +2,12 @@ import asyncio
 import json
 import pytest
 
-from server.server import Server
+from .server import Server
 
 
 async def server_starter(port):
-    server = Server()
-    await server.start_server('127.0.0.1', port)
+    app = Server()
+    await app.start_server('127.0.0.1', port)
 
 
 @pytest.fixture()
@@ -41,3 +41,12 @@ class TestClient:
 @pytest.fixture()
 def client(server):
     return TestClient(server)
+
+
+@pytest.fixture(autouse=True)
+async def db(server):
+    from . import db
+    await db.create_tables()
+    yield db
+    await db.drop_tables()
+    await db.disconnect()

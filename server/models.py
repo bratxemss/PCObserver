@@ -1,11 +1,7 @@
 import peewee as pw
 from peewee_aio.model import AIOModel
-from peewee_aio.manager import Manager
 
-# from . import db
-
-
-db = Manager("aiosqlite:///db.sqlite")
+from . import db
 
 
 @db.register

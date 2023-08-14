@@ -1,8 +1,9 @@
 import asyncio
-from asyncio import StreamReader, StreamWriter
 import json
 import logging
 import pytest
+
+from asyncio import StreamReader, StreamWriter
 
 from server.command_handlers import (
     register_user,
@@ -11,7 +12,6 @@ from server.command_handlers import (
     delete_app,
     send_response
 )
-
 
 logger = logging.getLogger("server")
 
