@@ -2,12 +2,14 @@ import asyncio
 from asyncio import StreamReader, StreamWriter
 import json
 import logging
+import pytest
 
 from server.command_handlers import (
     register_user,
     get_info,
     register_app,
-    delete_app
+    delete_app,
+    send_response
 )
 
 
@@ -21,8 +23,11 @@ class Server:
     async def start_server(self, host: str, port: int):
         server = await asyncio.start_server(self.client_connected, host, port)
 
-        async with server:
-            await server.serve_forever()
+        try:
+            async with server:
+                await server.serve_forever()
+        except pytest.PytestUnraisableExceptionWarning:
+            pass
 
     async def client_connected(self, reader: StreamReader, writer: StreamWriter):
         message = await reader.read(1024)
@@ -45,19 +50,20 @@ class Server:
                 logger.info(
                     "New client connection: %s. Number of connected clients = %s",
                     user_id, len(self.users))
+                # TODO: send answer about success connection
 
             elif command == "send_command":
                 data = message.get("data", {})
                 user_id = data.get("user_id", None)
                 if user_id:
                     user_writer = self.users[user_id]["writer"]
-                    user_writer.write(json.dumps(data).encode())
-                    await user_writer.drain()
-                    writer.close()
-                    await writer.wait_closed()
+                    await send_response(user_writer, data)
 
             elif command == "register_app":
                 await register_app(reader, writer, message)
 
             elif command == "delete_app":
                 await delete_app(reader, writer, message)
+
+        else:
+            await send_response(writer, {"success": False, "message": "Command not found."})

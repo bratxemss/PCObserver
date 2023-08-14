@@ -10,6 +10,13 @@ from server.utils import get_users_apps
 logger = logging.getLogger("commands handlers")
 
 
+async def send_response(writer, response):
+    writer.write(json.dumps(response).encode())
+    await writer.drain()
+    writer.close()
+    await writer.wait_closed()
+
+
 async def register_user(reader: StreamReader, writer: StreamWriter, message):
     user_id = message.get("data", {}).get("user_id", None)
     existing_customer = await Customer.get_or_none(telegram_id=user_id)
@@ -29,13 +36,13 @@ async def register_user(reader: StreamReader, writer: StreamWriter, message):
             "user token": user.user_token,
             "pc token": user.pc_token,
         })
-    response = {"status": "success", "message": "User login successfully",
-                "Information:": info}
+    response = {
+        "success": True,
+        "message": "User login successfully",
+        "information:": info
+    }
 
-    writer.write(json.dumps(response).encode())
-    await writer.drain()
-    writer.close()
-    await writer.wait_closed()
+    await send_response(writer, response)
 
 
 async def get_info(reader: StreamReader, writer: StreamWriter, message):
@@ -44,20 +51,17 @@ async def get_info(reader: StreamReader, writer: StreamWriter, message):
 
     if user_id:
         response = {
-            "status": "success",
+            "success": True,
             "message": "Connected successfully",  # I think this message here is incorrect
             "applications:": await get_users_apps(user_id)
         }
     else:
         response = {
-            "status": "error",
+            "success": False,
             "message": "Incorrect user_id",
         }
 
-    writer.write(json.dumps(response).encode())
-    await writer.drain()
-    writer.close()
-    await writer.wait_closed()
+    await send_response(writer, response)
 
 
 async def register_app(reader: StreamReader, writer: StreamWriter, message):
@@ -90,13 +94,10 @@ async def register_app(reader: StreamReader, writer: StreamWriter, message):
     response = {
         "success": success,
         "message": message,
-        "applications:": await get_users_apps(user_id)
+        "applications": await get_users_apps(user_id)
     }
 
-    writer.write(json.dumps(response).encode())
-    await writer.drain()
-    writer.close()
-    await writer.wait_closed()
+    await send_response(writer, response)
 
 
 async def delete_app(reader: StreamReader, writer: StreamWriter, message):
@@ -113,14 +114,11 @@ async def delete_app(reader: StreamReader, writer: StreamWriter, message):
                 .first()
             )
             deleted = await application.delete_instance()
-            response = {"status": "success" if bool(deleted) else "error", "app_id": app_id}
+            response = {"success": bool(deleted), "app_id": app_id}
         except Exception as e:
             logger.error("Error occurred during deletion: %s", e)
-            response = {"status": "error", "message": "An error occurred during deletion."}
+            response = {"success": False, "message": "An error occurred during deletion."}
     else:
-        response = {"status": "error", "message": "Invalid data."}
+        response = {"success": False, "message": "Invalid data."}
 
-    writer.write(json.dumps(response).encode())
-    await writer.drain()
-    writer.close()
-    await writer.wait_closed()
+    await send_response(writer, response)
