@@ -40,12 +40,4 @@ class TestClient:
 
 @pytest.fixture()
 def client(server):
-    """
-    Send message to test server.
-
-    :param port: port equal server fixture result
-    :param message: str or dict message for test server.
-    :return:
-    """
-
     return TestClient(server)

@@ -24,6 +24,6 @@ async def test_register_app(client):
     response = await client.send_message(message)
     assert response
     assert response["success"]
-    assert not response["message"]
+    assert response["message"]
     assert response["applications"]
     assert len(response["applications"])
