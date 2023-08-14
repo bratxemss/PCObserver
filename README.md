@@ -27,7 +27,7 @@ make init_db
 1) Create venv and activate
 ```sh
 python -m venv venv
-.venv\Scripts/activate
+.\venv\Scripts\activate
 ```
 
 2) Install poetry and install requirements.

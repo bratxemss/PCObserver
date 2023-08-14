@@ -27,6 +27,14 @@ uuid = "^1.30"
 sockio = "^0.15.0"
 customtkinter = "^5.2.0"
 
+[tool.pytest.ini_options]
+addopts = "-xslv"
+python_files = "test*.py"
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning"
+]
 
 [build-system]
 requires = ["poetry-core"]
