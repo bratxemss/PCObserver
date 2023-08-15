@@ -28,29 +28,29 @@ async def main():
     on_con_lost = loop.create_future()
     import uuid
 
-    # message = {
+    # message1 = {
     #     "command": "register_app",
     #     "data":
     #         {
-    #             "user_id": 1235641635,
+    #             "user_id": 6235273897,
     #             "application": {
-    #                 "name": "Doom 2016",
+    #                 "name": "Bread & Fred Demo.url",
     #                 "path": "C:/Users/bratx/Desktop/Bread & Fred Demo.url",
     #                 "size": 202,
     #                 "status": True,
     #             }
     #         }
     # }
-    message1 = {
-        "command": "delete_app",
-        "data":
-            {
-                "user_id": 1235641635,
-                "application": {
-                    "id": 1,
-                }
-            }
-    }
+    # message1 = {
+    #     "command": "delete_app",
+    #     "data":
+    #         {
+    #             "user_id": 1235641635,
+    #             "application": {
+    #                 "id": 1,
+    #             }
+    #         }
+    # }
     message = json.dumps(message1)
     transport, protocol = await loop.create_connection(
         lambda: Client(message, on_con_lost),
