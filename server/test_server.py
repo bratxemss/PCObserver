@@ -27,3 +27,19 @@ async def test_register_app(client):
     assert response["message"]
     assert response["applications"]
     assert len(response["applications"])
+
+
+async def test_register_user(client):
+    message = {
+        "command": "register_user",
+        "data":
+            {
+                "user_id": 1235641635
+                }
+    }
+    response = await client.send_message(message)
+    assert response
+    assert response["success"]
+    assert response["message"]
+    assert response["information"]
+    assert len(response["information"])
