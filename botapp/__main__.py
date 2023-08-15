@@ -1,7 +1,6 @@
 import argparse
 
 from botapp import bot
-from botapp.models import Customer
 
 
 def argsParser():
@@ -21,6 +20,5 @@ if __name__ == "__main__":
         bot.run(bot.db.create_tables())
 
     if namespace.run:
-        bot.run(bot.db.connect())
         bot.run()
-        bot.run(bot.db.disconnect())
+
