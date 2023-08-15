@@ -27,3 +27,22 @@ async def test_register_app(client):
     assert response["message"]
     assert response["applications"]
     assert len(response["applications"])
+
+
+async def test_delete_app(client, applications):
+    message = {
+        "command": "delete_app",
+        "data":
+            {
+                "user_id": 1235641635,
+                "application": {
+                    "id": 1
+                }
+            }
+    }
+    response = await client.send_message(message)
+    assert response
+    assert response["success"]
+    assert response["message"]
+    assert response["app_id"]
+

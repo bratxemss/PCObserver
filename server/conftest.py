@@ -50,3 +50,15 @@ async def db(server):
     yield db
     await db.drop_tables()
     await db.disconnect()
+
+
+@pytest.fixture()
+async def applications(db):
+    from .models import Application
+    return await Application.create(
+        user=1235641635,
+        app_name="app_name",
+        app_path="app_path",
+        app_size="app_size",
+        app_status="app_status"
+    )
