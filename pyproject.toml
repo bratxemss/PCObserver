@@ -35,6 +35,9 @@ filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::pytest.PytestUnraisableExceptionWarning"
 ]
+env = [
+    "ENV=tests"
+]
 
 [build-system]
 requires = ["poetry-core"]

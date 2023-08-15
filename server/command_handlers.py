@@ -6,7 +6,6 @@ from asyncio import StreamReader, StreamWriter
 from server.models import Customer, Application
 from server.utils import get_users_apps
 
-
 logger = logging.getLogger("commands handlers")
 
 
@@ -39,7 +38,7 @@ async def register_user(reader: StreamReader, writer: StreamWriter, message):
     response = {
         "success": True,
         "message": "User login successfully",
-        "information:": info
+        "information": info
     }
 
     await send_response(writer, response)
@@ -53,7 +52,7 @@ async def get_info(reader: StreamReader, writer: StreamWriter, message):
         response = {
             "success": True,
             "message": "Connected successfully",  # I think this message here is incorrect
-            "applications:": await get_users_apps(user_id)
+            "applications": await get_users_apps(user_id)
         }
     else:
         response = {

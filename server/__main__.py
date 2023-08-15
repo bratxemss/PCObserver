@@ -1,11 +1,12 @@
 import asyncio
 
-from server.server import Server
+from . import cfg
+from .server import Server
 
 
 async def main():
-    server = Server()
-    await server.start_server('127.0.0.1', 8000)
+    app = Server()
+    await app.start_server('127.0.0.1', 8000)
 
 
 if __name__ == "__main__":
