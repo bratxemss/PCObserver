@@ -3,7 +3,7 @@ import json
 import pytest
 
 from .server import Server
-
+from server.models import Customer
 
 async def server_starter(port):
     app = Server()
@@ -50,3 +50,4 @@ async def db(server):
     yield db
     await db.drop_tables()
     await db.disconnect()
+

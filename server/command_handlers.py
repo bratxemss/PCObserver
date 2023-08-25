@@ -31,9 +31,9 @@ async def register_user(reader: StreamReader, writer: StreamWriter, message):
     )
     for user in information:
         info.append({
-            "telegram id": user.telegram_id,
-            "user token": user.user_token,
-            "pc token": user.pc_token,
+            "telegram_id": user.telegram_id,
+            "user_token": user.user_token,
+            "pc_token": user.pc_token,
         })
     response = {
         "success": True,
