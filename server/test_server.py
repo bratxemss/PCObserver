@@ -29,7 +29,7 @@ async def test_register_app(client):
     assert len(response["applications"])
 
 
-async def test_get_info(client,applications):
+async def test_get_info(client, application):
     message = {
         "command": "get_info",
         "data":
@@ -41,6 +41,6 @@ async def test_get_info(client,applications):
     response = await client.send_message(message)
     assert response
     assert response["success"]
-    assert response["message"]
-    assert response["applications"]
-    assert len(response["applications"])
+    assert response["message"] == "Connected successfully"
+    from server.utils import get_users_apps
+    assert response["applications"] == await get_users_apps(message['data']['user_id'])

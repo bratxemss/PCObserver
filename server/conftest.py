@@ -53,7 +53,7 @@ async def db(server):
 
 
 @pytest.fixture()
-async def applications(db):
+async def application(db):
     from .models import Application
     return await Application.create(
         user=1235641635,
