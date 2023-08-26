@@ -9,11 +9,12 @@ from server.utils import get_users_apps
 logger = logging.getLogger("commands handlers")
 
 
-async def send_response(writer, response):
+async def send_response(writer, response, close_conn=True):
     writer.write(json.dumps(response).encode())
     await writer.drain()
-    writer.close()
-    await writer.wait_closed()
+    if close_conn:
+        writer.close()
+        await writer.wait_closed()
 
 
 async def register_user(reader: StreamReader, writer: StreamWriter, message):
