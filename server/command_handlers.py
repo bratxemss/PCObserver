@@ -113,7 +113,7 @@ async def delete_app(reader: StreamReader, writer: StreamWriter, message):
                 .first()
             )
             deleted = await application.delete_instance()
-            response = {"success": bool(deleted), "app_id": app_id}
+            response = {"success": bool(deleted), "message": "Deleted successfully", "app_id": app_id}
         except Exception as e:
             logger.error("Error occurred during deletion: %s", e)
             response = {"success": False, "message": "An error occurred during deletion."}
