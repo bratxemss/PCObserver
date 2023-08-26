@@ -1,5 +1,7 @@
 import customtkinter as ctk
+import threading
 from PIL import Image
+
 from Client import Client
 
 
@@ -24,21 +26,30 @@ class LoginWindow:
         label_img = ctk.CTkLabel(master=self.window, image=img, text="")
         label_img.grid(row=0, column=1, padx=15, sticky="w")
 
-        label_login = ctk.CTkLabel(master=main_frame, text="Login", font=("Robot", 16))
+        self.label_login = ctk.CTkLabel(master=main_frame, text="Telegram ID", font=("Robot", 16))
         tg_login_entry = ctk.CTkEntry(master=main_frame, placeholder_text="Token", width=200)
         login_button = ctk.CTkButton(master=main_frame, text="Enter")
         checkbox = ctk.CTkCheckBox(master=main_frame, text="Remember Me")
 
-        label_login.grid(row=0, column=3, padx=5, pady=5, sticky="n")
+        self.label_login.grid(row=0, column=3, padx=5, pady=5, sticky="n")
         tg_login_entry.grid(row=1, column=3, padx=5, pady=5, sticky="n")
         login_button.grid(row=2, column=3, padx=5, pady=5, sticky="n")
         checkbox.grid(row=3, column=3, padx=5, pady=5, sticky="n")
 
-        def login():
-            user_input = tg_login_entry.get()
-            Client(command="connect", data={"user_id": user_input})
+        self.client = Client(self)
+        self.thread_reader = None
 
+        def login():
+            self.client.telegram_id = tg_login_entry.get()
+            self.thread_reader = threading.Thread(target=self.client.run_connection, daemon=True)
+            if not self.thread_reader.is_alive():
+                self.thread_reader.start()
         login_button.configure(command=login)
+
+        def on_closing():
+            self.window.destroy()
+
+        self.window.protocol("WM_DELETE_WINDOW", on_closing)
         self.window.mainloop()
 
 

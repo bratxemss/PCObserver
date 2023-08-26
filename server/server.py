@@ -13,6 +13,7 @@ from server.command_handlers import (
     send_response
 )
 
+logging.basicConfig(filemode="console", encoding="utf-8", level=logging.DEBUG)
 logger = logging.getLogger("server")
 
 
@@ -46,18 +47,21 @@ class Server:
             elif command == "connect":
                 user_id = message.get("data", {}).get("user_id", None)
                 if user_id:
-                    self.users[user_id] = {"reader": reader, "writer": writer}
+                    self.users[str(user_id)] = {"reader": reader, "writer": writer}
                 logger.info(
                     "New client connection: %s. Number of connected clients = %s",
                     user_id, len(self.users))
                 # TODO: send answer about success connection
 
             elif command == "send_command":
+                logger.debug("NEW COMMAND %s", message)
                 data = message.get("data", {})
-                user_id = data.get("user_id", None)
+                user_id = str(data.get("user_id", None))
                 if user_id:
                     user_writer = self.users[user_id]["writer"]
-                    await send_response(user_writer, data)
+                    await send_response(user_writer, data, close_conn=False)
+                writer.close()
+                await writer.wait_closed()
 
             elif command == "register_app":
                 await register_app(reader, writer, message)
