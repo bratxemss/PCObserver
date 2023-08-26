@@ -29,6 +29,33 @@ async def test_register_app(client):
     assert len(response["applications"])
 
 
+async def test_register_user(client):
+    from .models import Customer
+    assert await Customer.select().count() == 0
+    message = {
+        "command": "register_user",
+        "data":
+            {
+                "user_id": 1235641635
+                }
+    }
+
+    response = await client.send_message(message)
+    assert await Customer.select().count() == 1
+    assert response
+    assert response["success"]
+    assert response["message"] == "User login successfully"
+    user = await Customer.select().first()
+    assert response["information"] == [
+        {
+            "telegram_id": str(message["data"]["user_id"]),
+            "user_token": user.user_token,
+            "pc_token": user.pc_token
+        }
+    ]
+    assert len(response["information"])
+
+    
 async def test_get_info(client, application):
     message = {
         "command": "get_info",

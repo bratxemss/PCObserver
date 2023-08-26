@@ -51,7 +51,7 @@ async def db(server):
     await db.drop_tables()
     await db.disconnect()
 
-
+    
 @pytest.fixture()
 async def application(db):
     from .models import Application
