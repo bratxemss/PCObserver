@@ -60,5 +60,6 @@ async def application(db):
         app_name="app_name",
         app_path="app_path",
         app_size="app_size",
-        app_status="app_status"
+        app_status=False,
+        app_favorite=False
     )

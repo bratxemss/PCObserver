@@ -22,6 +22,7 @@ class Application(AIOModel):
     app_name = pw.CharField(null=True)
     app_size = pw.IntegerField(default=0)
     app_status = pw.BooleanField(default=False)
+    app_favorite = pw.BooleanField(default=False)
 
     def __repr__(self):
         return f"<Application: {self.user}, {self.app_name}, {self.app_path}, {self.app_size}, {self.app_status}>"

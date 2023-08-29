@@ -11,7 +11,8 @@ async def get_user_app(user_id, app_id):
             "name": user_application.app_name,
             "path": user_application.app_path,
             "size": user_application.app_size,
-            "status": user_application.app_status
+            "status": user_application.app_status,
+            "favorite": user_application.app_favorite
         }]
         return app_info
 
@@ -26,7 +27,8 @@ async def get_users_apps(user_id):
             "name": app.app_name,
             "path": app.app_path,
             "size": app.app_size,
-            "status": app.app_status
+            "status": app.app_status,
+            "favorite": app.app_favorite
         }
         for app in user_applications
     ]
