@@ -8,6 +8,7 @@ from asyncio import StreamReader, StreamWriter
 from server.command_handlers import (
     register_user,
     get_info,
+    get_application_info,
     register_app,
     delete_app,
     send_response
@@ -43,6 +44,9 @@ class Server:
 
             elif command == "get_info":
                 await get_info(reader, writer, message)
+
+            elif command == "get_application_info":
+                await get_application_info(reader, writer, message)
 
             elif command == "connect":
                 user_id = message.get("data", {}).get("user_id", None)
