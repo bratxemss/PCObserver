@@ -17,13 +17,12 @@ async def reader(message: dict, need_of_unexpected_info=True) -> str:
     if message.get("message"):
         answer += f"{message['message']}! "
     if message.get("success"):
-        if message.get("success"):
-            answer = "✅ " + answer + "✅"
-        elif not message.get("success"):
-            answer = "❌ " + answer + "❌"
+        answer = "✅ " + answer + "✅"
+    elif not message.get("success"):
+        answer = "❌ " + answer + "❌"
     if need_of_unexpected_info:
         for item, key in message.items():
-            if not item == "message" and not item == "success":
+            if item != "message" and item != "success":
                 if isinstance(key, list):
                     for app in key:
                         if isinstance(app, dict):
@@ -50,10 +49,10 @@ async def connect_to_pc(user_id):
     return await(reader(json.loads(response), need_of_unexpected_info=False)), json.loads(response)
 
 
-async def get_application_data(user_id, app_path):
+async def get_application_data(user_id, app_id):
     response = await bot.servers_client.send_message(command="get_application_info", data={
         "user_id": user_id,
-        "app_path": app_path,
+        "app_id": app_id,
     })
     return await(reader(json.loads(response)))
 

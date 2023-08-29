@@ -69,10 +69,9 @@ async def process_operations(client, message):
         buttons = []
         message, buttons_info = await connect_to_pc(gm_id)
         for app in buttons_info["applications"]:
-            print(app)
             app_name = app.get("name")
-            app_path = app.get("path")
-            button = [InlineKeyboardButton(app_name, callback_data=f"app_{gm_id}:%%:{app_path}")]
+            app_id = app.get("id")
+            button = [InlineKeyboardButton(app_name, callback_data=f"app_/{gm_id}/{app_id}")]
             buttons.append(button)
 
         keyboard = InlineKeyboardMarkup(buttons)
@@ -85,10 +84,10 @@ async def process_operations(client, message):
     return
 
 
-@Client.on_callback_query(dynamic_data_filter(r"app_"))
+@Client.on_callback_query(dynamic_data_filter(r"^app_/[0-9]+/[0-9]+$"))
 async def send_app_info(client, callback_query):
     callback_data = callback_query.data
-    items = str(callback_data.replace("app_", "")).split(":%%:")
-    application_data = await get_application_data(items[0], items[1])
+    _, user_id, app_id = callback_data.split("/")
+    application_data = await get_application_data(user_id, app_id)
     await callback_query.message.reply_text(f"{application_data}")
     await callback_query.answer()

@@ -66,17 +66,17 @@ async def get_info(reader: StreamReader, writer: StreamWriter, message):
 
 async def get_application_info(reader: StreamReader, writer: StreamWriter, message):
     user_id = message.get("data", {}).get("user_id", None)
-    app_path = message.get("data", {}).get("app_path", None)
-    logger.debug(f"Get app info about user {user_id}, to application path {app_path}")
+    app_id = message.get("data", {}).get("app_id", None)
+    logger.debug(f"Get app info about user {user_id}")
     app_info = []
-    if user_id and app_path:
-        app_info = await get_user_app(user_id, app_path)
+    if user_id and app_id:
+        app_info = await get_user_app(user_id, app_id)
         if app_info:
             success = True
             message = "Application information found successfully"
         else:
             success = False
-            message = f"Application cant found information about {app_path}"
+            message = f"Application cant found information about application"
     else:
         success = False
         message = "The user does not exist or the application path is incorrect"

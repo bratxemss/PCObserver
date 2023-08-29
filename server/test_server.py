@@ -62,7 +62,7 @@ async def test_get_application_info(client, application):
         "data":
             {
                 "user_id": 1235641635,
-                "app_path": "app_path"
+                "app_id": 1
             }
     }
     response = await client.send_message(message)
@@ -70,7 +70,7 @@ async def test_get_application_info(client, application):
     assert response["success"]
     assert response["message"] == "Application information found successfully"
     from server.utils import get_user_app
-    assert response["information"] == await get_user_app(message['data']['user_id'], message['data']['app_path'])
+    assert response["information"] == await get_user_app(message['data']['user_id'], message['data']['app_id'])
 
 
 async def test_get_info(client, application):

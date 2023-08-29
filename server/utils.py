@@ -1,10 +1,10 @@
 from server.models import Application
 
 
-async def get_user_app(user_id, app_path):
+async def get_user_app(user_id, app_id):
     user_application = await Application.select().where(
         Application.user == user_id,
-        Application.app_path == app_path
+        Application.id == app_id
     ).first()
     if user_application:
         app_info = [{
