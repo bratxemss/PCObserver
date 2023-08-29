@@ -48,19 +48,23 @@ async def register_user(reader: StreamReader, writer: StreamWriter, message):
 async def get_info(reader: StreamReader, writer: StreamWriter, message):
     logger.debug("Get info")
     user_id = message.get("data", {}).get("user_id", None)
-
+    apps = []
     if user_id:
-        response = {
-            "success": True,
-            "message": "Connected successfully",  # I think this message here is incorrect
-            "applications": await get_users_apps(user_id)
-        }
+        apps = await get_users_apps(user_id)
+        if apps:
+            success = True
+            message = "Connected successfully"
+        else:
+            success = False
+            message = "Application list is empty"
     else:
-        response = {
-            "success": False,
-            "message": "Incorrect user_id",
-        }
-
+        success = False
+        message = "Incorrect user ID"
+    response = {
+        "success": success,
+        "message": message,
+        "applications": apps
+    }
     await send_response(writer, response)
 
 
@@ -101,6 +105,7 @@ async def register_app(reader: StreamReader, writer: StreamWriter, message):
         app_path = application.get("path", "unknown")
         app_size = application.get("size", 0)
         app_status = application.get("status", False)
+        app_favorite = application.get("favorite", False)
         if not await Application.select().where(
                 Application.user == user_id,
                 Application.app_path == app_path
@@ -110,7 +115,8 @@ async def register_app(reader: StreamReader, writer: StreamWriter, message):
                 app_name=app_name,
                 app_path=app_path,
                 app_size=app_size,
-                app_status=app_status
+                app_status=app_status,
+                app_favorite=app_favorite,
             )
             message = "Application registered successfully"
     else:

@@ -68,18 +68,24 @@ async def process_operations(client, message):
     elif message.text == "✅ Connect to PC ✅":
         buttons = []
         message, buttons_info = await connect_to_pc(gm_id)
-        for app in buttons_info["applications"]:
-            app_name = app.get("name")
-            app_id = app.get("id")
-            button = [InlineKeyboardButton(app_name, callback_data=f"app_/{gm_id}/{app_id}")]
-            buttons.append(button)
+        if buttons_info["applications"]:
+            for app in buttons_info["applications"]:
+                app_name = app.get("name")
+                app_id = app.get("id")
+                button = [InlineKeyboardButton(app_name, callback_data=f"app_/{gm_id}/{app_id}")]
+                buttons.append(button)
 
-        keyboard = InlineKeyboardMarkup(buttons)
-        await client.send_message(
-            gm_id,
-            message,
-            reply_markup=keyboard
-        )
+            keyboard = InlineKeyboardMarkup(buttons)
+            await client.send_message(
+                gm_id,
+                message,
+                reply_markup=keyboard
+            )
+        else:
+            await client.send_message(
+                gm_id,
+                message,
+            )
 
     return
 

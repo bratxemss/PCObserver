@@ -17,6 +17,7 @@ async def test_register_app(client):
                     "path": "C:/Users/bratx/Desktop/Bread & Fred Demo.url",
                     "size": 202,
                     "status": True,
+                    "favorite": False
                 }
             }
     }
