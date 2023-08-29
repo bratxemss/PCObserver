@@ -35,7 +35,7 @@ class Bot(Client):
         env = env or os.environ.get("ENV", "develop")
         self.cfg = Config(f"{__name__}.config.{env}")
         self.ENV = env
-        self.servers_client = ClientForServer(self.cfg.SERVER_HOST, self.cfg.PORT)
+        self.servers_client = ClientForServer(self.cfg.SERVER_HOST, self.cfg.SERVER_PORT)
 
         super().__init__(
             self.cfg.TELEGRAM_BOT_NAME,

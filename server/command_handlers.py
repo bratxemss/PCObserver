@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from asyncio import StreamReader, StreamWriter
 from server.models import Customer, Application
-from server.utils import get_users_apps
+from server.utils import get_users_apps,get_user_app
 
 logger = logging.getLogger("commands handlers")
 
@@ -60,6 +60,32 @@ async def get_info(reader: StreamReader, writer: StreamWriter, message):
             "success": False,
             "message": "Incorrect user_id",
         }
+
+    await send_response(writer, response)
+
+
+async def get_application_info(reader: StreamReader, writer: StreamWriter, message):
+    user_id = message.get("data", {}).get("user_id", None)
+    app_path = message.get("data", {}).get("app_path", None)
+    logger.debug(f"Get app info about user {user_id}, to application path {app_path}")
+    app_info = []
+    if user_id and app_path:
+        app_info = await get_user_app(user_id, app_path)
+        if app_info:
+            success = True
+            message = "Application information found successfully"
+        else:
+            success = False
+            message = f"Application cant found information about {app_path}"
+    else:
+        success = False
+        message = "The user does not exist or the application path is incorrect"
+
+    response = {
+        "success": success,
+        "message": message,
+        "information": app_info
+    }
 
     await send_response(writer, response)
 

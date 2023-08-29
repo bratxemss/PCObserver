@@ -5,9 +5,17 @@ from pyrogram import Client, filters
 from pyrogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
 )
 
-from .utils import get_token, connect_to_pc
+from .utils import (
+    get_application_data,
+    get_token,
+    connect_to_pc,
+    dynamic_data_filter,
+
+)
 
 
 @Client.on_message(filters.command("help", ["/", ".", "?"]))
@@ -58,8 +66,29 @@ async def process_operations(client, message):
             await get_token(gm_id),
         )
     elif message.text == "✅ Connect to PC ✅":
+        buttons = []
+        message, buttons_info = await connect_to_pc(gm_id)
+        for app in buttons_info["applications"]:
+            print(app)
+            app_name = app.get("name")
+            app_path = app.get("path")
+            button = [InlineKeyboardButton(app_name, callback_data=f"app_{gm_id}:%%:{app_path}")]
+            buttons.append(button)
+
+        keyboard = InlineKeyboardMarkup(buttons)
         await client.send_message(
             gm_id,
-            await connect_to_pc(gm_id),
+            message,
+            reply_markup=keyboard
         )
+
     return
+
+
+@Client.on_callback_query(dynamic_data_filter(r"app_"))
+async def send_app_info(client, callback_query):
+    callback_data = callback_query.data
+    items = str(callback_data.replace("app_", "")).split(":%%:")
+    application_data = await get_application_data(items[0], items[1])
+    await callback_query.message.reply_text(f"{application_data}")
+    await callback_query.answer()

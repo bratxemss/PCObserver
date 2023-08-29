@@ -1,6 +1,21 @@
 from server.models import Application
 
 
+async def get_user_app(user_id, app_path):
+    user_application = await Application.select().where(
+        Application.user == user_id,
+        Application.app_path == app_path
+    ).first()
+    if user_application:
+        app_info = [{
+            "name": user_application.app_name,
+            "path": user_application.app_path,
+            "size": user_application.app_size,
+            "status": user_application.app_status
+        }]
+        return app_info
+
+
 async def get_users_apps(user_id):
     user_applications = await Application.select().where(
         Application.user == user_id
