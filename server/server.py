@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import pytest
-
+from server.models import Customer
 from asyncio import StreamReader, StreamWriter
 
 from server.command_handlers import (
@@ -50,12 +50,23 @@ class Server:
 
             elif command == "connect":
                 user_id = message.get("data", {}).get("user_id", None)
-                if user_id:
+                existing_customer = await Customer.get_or_none(telegram_id=user_id)
+                if existing_customer:
                     self.users[str(user_id)] = {"reader": reader, "writer": writer}
-                logger.info(
-                    "New client connection: %s. Number of connected clients = %s",
-                    user_id, len(self.users))
-                # TODO: send answer about success connection
+                    success = True
+                    message = "Connected successfully"
+                    logger.info(
+                        "New client connection: %s. Number of connected clients = %s",
+                        user_id, len(self.users))
+
+                else:
+                    success = False
+                    message = "Wrong telegram ID"
+                response = {
+                    "success": success,
+                    "message": message
+                }
+                await send_response(writer, response)
 
             elif command == "send_command":
                 logger.debug("NEW COMMAND %s", message)

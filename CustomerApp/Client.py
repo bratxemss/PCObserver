@@ -9,40 +9,60 @@ class Client:
         self.Port = defaults.PORT
         self.telegram_id = None
         self.window = window
+        self.response = None
 
     def __repr__(self):
         return f"Connected to {self.IP}:{self.Port}"
 
-    def run_connection(self):
-        asyncio.run(self.connection())
+    def run_connection(self, message: dict):
+        asyncio.run(self.connection(message))
 
-    async def connection(self):
+    async def connection(self, message: dict):
         reader, writer = await asyncio.open_connection(self.IP, self.Port)
-        message = {
-            "command": "connect",
-            "data": {"user_id": self.telegram_id}
-        }
         message = json.dumps(message).encode()
         writer.write(message)
         await writer.drain()
-        print("CONNECTED!")
 
         while (message := await reader.read(1024)) != b'':
-            message = message.decode()
-            print(message)
+            self.response = message.decode()
+            print(self.response)
             try:
-                data = json.loads(message)
-                command = data.get("client_command")
-                if command["action"] == "change_label_login":
-                    column = command.get("column")
-                    self.window.label_login.grid(row=0, column=column, padx=5, pady=5, sticky="n")
-                    self.window.window.update()
+                data = json.loads(self.response)
+                success = data.get("success")
+                if success:
+                    print("CONNECTED!")
+                else:
+                    print("The server does not allow the user")
+                    break
             except Exception as ex:
-                print(f"ERROR: {ex}")
+                print(f"Error:{ex}")
                 # TODO: write log
-                pass
         print("Connection closed.")
 
+    def run_answer(self):
+        color, message, app = asyncio.run(self.answer())
+        return color, message, app
+
+    async def answer(self):
+        applications = None
+        if self.response:
+            data = json.loads(self.response)
+            message = data.get("message")
+            success = data.get("success")
+            try:
+                applications = data.get("applications")
+            except:
+                pass
+            if not success:
+                color = "#be0000"  # red
+            else:
+                color = "#33b631"  # green
+                if not message:
+                    message = "Unexpected error, please restart application"
+        else:
+            color = "#be0000"  # red
+            message = "Server unreachable"
+        return color, message, applications
 
 
 #print(Client(command="connect", data={"user_id": 1}))
