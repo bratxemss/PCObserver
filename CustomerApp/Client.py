@@ -31,7 +31,7 @@ class Client:
         while (message := await self.reader.read(1024)) != b'':
             response = message.decode()
             print(response)
-            color, message, app = self.answer(response)
+            color, message, apps, command = self.answer(response)
             self.window.process_answer(color=color, message=message)
             try:
                 data = json.loads(response)
@@ -39,28 +39,32 @@ class Client:
                 if not success:
                     print("The server does not allow the user")
                     break
-                # command = data.get("command")
-                # if command:
-                #     if command == "update_applications":
-                #         self.window.update_applications_list(data.get(""))
+                if command:
+                    if command == "update_list":
+                        self.window.get_application_list(apps)
 
             except Exception as ex:
                 print(f"Error:{ex}")
+            return
                 # TODO: write log
         print("Connection closed.")
 
+
     def send_message(self, message: dict):
-        self.writer.write(json.dumps(message))
+        self.writer.write(json.dumps(message).encode())
         asyncio.run(self.writer.drain())
 
     def answer(self, response):
         applications = None
+        command = None
         if response:
             data = json.loads(response)
             message = data.get("message")
             success = data.get("success")
             try:
                 applications = data.get("applications")
+                if applications:
+                    command = "update_list"
             except:
                 pass
             if not success:
@@ -72,7 +76,7 @@ class Client:
         else:
             color = "#be0000"  # red
             message = "Server unreachable"
-        return color, message, applications
+        return color, message, applications,command
 
 
 #print(Client(command="connect", data={"user_id": 1}))

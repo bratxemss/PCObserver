@@ -1,4 +1,4 @@
-
+import asyncio
 import customtkinter as ctk
 import threading
 from PIL import Image
@@ -56,7 +56,7 @@ class LoginWindow(Window):
         self.login_button.configure(command=self.login)
 
     def get_application_list(self, apps):
-        pass
+        return print(apps)
 
     def change_window(self):
         tabview = ctk.CTkTabview(master=self.main_frame)
@@ -138,6 +138,10 @@ class LoginWindow(Window):
         f_open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                        hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                        height=45)
+        (self.client.send_message({
+            "command": "get_info",
+            "user_id": self.id
+        }))
 
     def login(self):
         self.client.telegram_id = self.tg_login_entry.get()
@@ -151,6 +155,9 @@ class LoginWindow(Window):
         if message == "Connected successfully":
             self.id = self.client.telegram_id
             self.change_window()
+
+
+
 
 
 if __name__ == "__main__":
