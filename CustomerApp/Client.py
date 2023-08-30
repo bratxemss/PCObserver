@@ -11,6 +11,7 @@ class Client:
         self.window = window
         self.reader = None
         self.writer = None
+        self.current_response = None
 
     def __repr__(self):
         return f"Connected to {self.IP}:{self.Port}"
@@ -30,6 +31,8 @@ class Client:
         while (message := await self.reader.read(1024)) != b'':
             response = message.decode()
             print(response)
+            color, message, app = self.answer(response)
+            self.window.process_answer(color=color, message=message)
             try:
                 data = json.loads(response)
                 success = data.get("success")
@@ -40,6 +43,7 @@ class Client:
                 # if command:
                 #     if command == "update_applications":
                 #         self.window.update_applications_list(data.get(""))
+
             except Exception as ex:
                 print(f"Error:{ex}")
                 # TODO: write log
@@ -49,26 +53,26 @@ class Client:
         self.writer.write(json.dumps(message))
         asyncio.run(self.writer.drain())
 
-    # async def answer(self):
-    #     applications = None
-    #     if self.response:
-    #         data = json.loads(self.response)
-    #         message = data.get("message")
-    #         success = data.get("success")
-    #         try:
-    #             applications = data.get("applications")
-    #         except:
-    #             pass
-    #         if not success:
-    #             color = "#be0000"  # red
-    #         else:
-    #             color = "#33b631"  # green
-    #             if not message:
-    #                 message = "Unexpected error, please restart application"
-    #     else:
-    #         color = "#be0000"  # red
-    #         message = "Server unreachable"
-    #     return color, message, applications
+    def answer(self, response):
+        applications = None
+        if response:
+            data = json.loads(response)
+            message = data.get("message")
+            success = data.get("success")
+            try:
+                applications = data.get("applications")
+            except:
+                pass
+            if not success:
+                color = "#be0000"  # red
+            else:
+                color = "#33b631"  # green
+                if not message:
+                    message = "Unexpected error, please restart application"
+        else:
+            color = "#be0000"  # red
+            message = "Server unreachable"
+        return color, message, applications
 
 
 #print(Client(command="connect", data={"user_id": 1}))

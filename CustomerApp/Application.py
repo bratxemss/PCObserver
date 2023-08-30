@@ -55,7 +55,7 @@ class LoginWindow(Window):
 
         self.login_button.configure(command=self.login)
 
-    def update_applications_list(self, apps):
+    def get_application_list(self, apps):
         pass
 
     def change_window(self):
@@ -141,19 +141,16 @@ class LoginWindow(Window):
 
     def login(self):
         self.client.telegram_id = self.tg_login_entry.get()
+
         self.thread_reader = threading.Thread(target=self.client.run_connection, daemon=True)
         if not self.thread_reader.is_alive():
             self.thread_reader.start()
 
-        color, message, app = self.client.run_answer()
+    def process_answer(self, message, color):
         self.error_label.configure(text=message, text_color=color)
-
         if message == "Connected successfully":
             self.id = self.client.telegram_id
             self.change_window()
-            self.error_label.configure(text=message, text_color=color)
-            return self.id
-        return None
 
 
 if __name__ == "__main__":
