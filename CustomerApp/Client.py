@@ -9,6 +9,9 @@ class Client:
         self.Port = defaults.PORT
         self.telegram_id = None
         self.window = window
+        self.reader = None
+        self.writer = None
+        self.current_response = None
 
     def __repr__(self):
         return f"Connected to {self.IP}:{self.Port}"
@@ -17,32 +20,38 @@ class Client:
         asyncio.run(self.connection())
 
     async def connection(self):
-        reader, writer = await asyncio.open_connection(self.IP, self.Port)
-        message = {
+        self.reader, self.writer = await asyncio.open_connection(self.IP, self.Port)
+        message = json.dumps({
             "command": "connect",
             "data": {"user_id": self.telegram_id}
-        }
-        message = json.dumps(message).encode()
-        writer.write(message)
-        await writer.drain()
-        print("CONNECTED!")
+        }).encode()
+        self.writer.write(message)
+        await self.writer.drain()
 
-        while (message := await reader.read(1024)) != b'':
-            message = message.decode()
-            print(message)
+        logged_in = False
+        while (message := await self.reader.read(1024)) != b'':
+            response = message.decode()
+            print(response)
             try:
-                data = json.loads(message)
-                command = data.get("client_command")
-                if command["action"] == "change_label_login":
-                    column = command.get("column")
-                    self.window.label_login.grid(row=0, column=column, padx=5, pady=5, sticky="n")
-                    self.window.window.update()
-            except Exception as ex:
-                print(f"ERROR: {ex}")
+                data = json.loads(response)
+            except:  # noqa
                 # TODO: write log
-                pass
+                self.window.process_answer({"success": False, "message": "Invalid response from server!"})
+                break
+
+            if not logged_in:
+                if data.get("success"):
+                    self.window.change_window()
+                self.window.process_answer(data)
+
+            if "applications" in data:
+                self.window.render_applications(data["applications"])
+
         print("Connection closed.")
+        return
 
-
+    def send_message(self, message: dict):
+        self.writer.write(json.dumps(message).encode())
+        asyncio.create_task(self.writer.drain())
 
 #print(Client(command="connect", data={"user_id": 1}))
