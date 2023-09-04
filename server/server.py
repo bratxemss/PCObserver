@@ -13,6 +13,7 @@ from server.command_handlers import (
     delete_app,
     send_response
 )
+from server.utils import get_users_apps
 
 logging.basicConfig(filemode="console", encoding="utf-8", level=logging.DEBUG)
 logger = logging.getLogger("server")
@@ -62,11 +63,14 @@ class Server:
                 else:
                     success = False
                     message = "Wrong telegram ID"
+                res = await get_users_apps(user_id)
                 response = {
                     "success": success,
-                    "message": message
+                    "message": message,
+                    "applications": res
+
                 }
-                await send_response(writer, response)
+                await send_response(writer, response, close_conn=False)
 
             elif command == "send_command":
                 logger.debug("NEW COMMAND %s", message)

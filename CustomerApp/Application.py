@@ -39,7 +39,6 @@ class Window:
 class LoginWindow(Window):
     def __init__(self):
         super().__init__()
-        self.id = None
         self.client = Client(self)
         self.thread_reader = None
 
@@ -140,7 +139,7 @@ class LoginWindow(Window):
                                        height=45)
         (self.client.send_message({
             "command": "get_info",
-            "user_id": self.id
+            "user_id": self.client.telegram_id
         }))
 
     def login(self):
@@ -150,14 +149,21 @@ class LoginWindow(Window):
         if not self.thread_reader.is_alive():
             self.thread_reader.start()
 
-    def process_answer(self, message, color):
+    def process_answer(self, data):
+        message = data.get("message")
+        success = data.get("success")
+
+        if not success:
+            color = "#be0000"  # red
+        else:
+            color = "#33b631"  # green
+            if not message:
+                message = "Unexpected error, please restart application"
+
         self.error_label.configure(text=message, text_color=color)
-        if message == "Connected successfully":
-            self.id = self.client.telegram_id
-            self.change_window()
 
-
-
+    def render_applications(self, apps: list):
+        pass
 
 
 if __name__ == "__main__":
