@@ -1,4 +1,3 @@
-import asyncio
 import customtkinter as ctk
 import threading
 from PIL import Image
@@ -16,6 +15,7 @@ class Window:
         self.window.iconbitmap("img/Logo.ico")
         self.window.columnconfigure(1, weight=1)
         self.window.rowconfigure(1, weight=1)
+        self.window.resizable(False, False)
 
         self.main_frame = ctk.CTkFrame(master=self.window, fg_color="#212121")
         self.main_frame.grid(row=1, column=1, padx=20, pady=20, sticky="nsew")
@@ -53,16 +53,15 @@ class LoginWindow(Window):
         self.checkbox.grid(row=3, column=3, padx=5, pady=5, sticky="n")
 
         self.login_button.configure(command=self.login)
-
-    def get_application_list(self, apps):
-        return print(apps)
+        self.list_of_apps = None
 
     def change_window(self):
         tabview = ctk.CTkTabview(master=self.main_frame)
         tabview.add("Application")
         tabview.add("Favorite")
 
-        info_frame = ctk.CTkFrame(master=self.main_frame, fg_color="#212121")  # 212121
+        self.info_frame = ctk.CTkFrame(master=self.main_frame, fg_color="#212121")  # 212121
+
         path_frame = ctk.CTkFrame(tabview.tab("Application"), )
 
         button_add_to_favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12,
@@ -71,21 +70,23 @@ class LoginWindow(Window):
         button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
         open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
 
-        info_label = ctk.CTkLabel(text="", width=5, height=4, master=info_frame)
+        self.info_label = ctk.CTkLabel(text="", width=5, height=4, master=self.info_frame)
+
         path_entry = ctk.CTkEntry(master=path_frame, placeholder_text="Path")
-        filter_entry = ctk.CTkEntry(tabview.tab("Application"), placeholder_text="Filter")
-        list_of_apps = ctk.CTkOptionMenu(tabview.tab("Application"), values=["Applications"])
+        self.filter_entry = ctk.CTkEntry(tabview.tab("Application"), placeholder_text="Filter")
+        self.list_of_apps = ctk.CTkOptionMenu(tabview.tab("Application"), values=["Applications"])
 
         self.label_login.destroy()
         self.tg_login_entry.destroy()
         self.login_button.destroy()
         self.checkbox.destroy()
 
-        self.main_frame.configure(fg_color='#1a1a1a')
-        self.main_frame.grid(row=1, column=1, columnspan=5, rowspan=5, padx=0, pady=0)
+        #self.main_frame.configure(fg_color='#1a1a1a')
+
+        self.main_frame.grid(row=1, column=1, columnspan=5, rowspan=5, padx=20, pady=20, sticky="nsew")
         tabview.grid(row=1, column=1, columnspan=5, rowspan=5, padx=20, pady=20, sticky="nsew")
 
-        info_frame.configure(height=100)
+        self.info_frame.configure(height=100,)
         self.main_frame.columnconfigure(5, weight=1)
         self.main_frame.rowconfigure(5, weight=1)
 
@@ -104,17 +105,17 @@ class LoginWindow(Window):
         f_open_folder_button.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
         delete_favorite_button.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
 
-        list_of_apps.grid(row=0, column=5, padx=300)
-        list_of_apps.configure(width=200, height=30, corner_radius=10)
-        filter_entry.grid(row=1, column=5, padx=300)
+        self.list_of_apps.grid(row=0, column=5, padx=300)
+        self.list_of_apps.configure(width=200, height=30, corner_radius=10)
+        self.filter_entry.grid(row=1, column=5, padx=300)
         path_frame.grid(column=5)
         open_folder_button.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
 
-        info_label.grid(row=5, column=3, )
+        self.info_label.grid(row=5, column=3, padx=5, pady=(0, 15), sticky="s")
 
         path_entry.grid(row=0, column=1, pady=5, padx=25)
 
-        filter_entry.configure(width=200)
+        self.filter_entry.configure(width=200)
         button_add_to_list.grid(row=0, column=6, sticky="nsew", pady=10, padx=20)
         button_add_to_favorite.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
         button_delete.grid(row=2, column=0, sticky="nsew", pady=10, padx=20)
@@ -137,10 +138,6 @@ class LoginWindow(Window):
         f_open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                        hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                        height=45)
-        (self.client.send_message({
-            "command": "get_info",
-            "user_id": self.client.telegram_id
-        }))
 
     def login(self):
         self.client.telegram_id = self.tg_login_entry.get()
@@ -162,10 +159,59 @@ class LoginWindow(Window):
 
         self.error_label.configure(text=message, text_color=color)
 
-    def render_applications(self, apps: list):
-        pass
+    def render_applications(self, apps: dict):
+        self.list_of_apps.configure(values=[apps[i]["name"] for i in range(len(apps))])
 
+    def set_functional(self, apps: dict):
+        self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(1,
+                                                                             lambda: self.show_info
+                                                                             (event, apps=apps, label=self.info_label)))
+        self.filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.filter_entry,
+                                                                                 list_app=self.list_of_apps, apps=apps))
+
+    def show_info(self, event=None, apps=None, label=None):
+        try:
+            values = {apps[i]["name"]: [apps[i]["path"], self.size_reader(int(apps[i]["size"]))] for i in range(len(apps))}
+            current_selection_in_list = self.list_of_apps.get()
+            if current_selection_in_list:
+                data = [values[current_selection_in_list]][0]
+                self.info_frame.grid(row=5, column=3, padx=(60, 70), pady=(0, 15), sticky="s")
+                label.configure(
+                     text=f"Name: {current_selection_in_list}\nPath: {data[0]}\nSize of path folder: {data[1]}",
+                     font=("Robot", 18))
+        except KeyError:
+            pass
+
+    def filter_listbox(self, apps, event=None, entry=None, list_app=None,):
+        user_input = entry.get()
+        # Get the current values in the ListOfApps option menu
+        current_values = list_app.cget("values")
+        # Clear the current values in the ListOfApps option menu
+        list_app.configure(values=[])
+
+        # Iterate through all items in the data source and only insert the items that contain the user's input
+        filtered_items = []
+        for item in current_values:
+            if user_input.lower() in item.lower():
+                filtered_items.append(item)
+        # update the ListOfApps option menu with filtered items
+        if user_input == "":
+            filtered_items = [apps[i]["name"] for i in range(len(apps))]
+        list_app.configure(values=filtered_items)
+
+    def size_reader(self, file_size: int):
+        if 1024 <= file_size < (1024 ** 2):
+            size = f"{round(file_size / 1024, 2)} KB"
+        elif (1024 ** 2) <= file_size < (1024 ** 3):
+            size = f"{round(file_size / (1024 ** 2), 2)} MB"
+        elif file_size >= (1024 ** 3):
+            size = f"{round(file_size / (1024 ** 3), 2)} GB"
+        else:
+            size = f"{file_size} B"
+        return size
 
 if __name__ == "__main__":
     app = LoginWindow()
     app.window.mainloop()
+
+
