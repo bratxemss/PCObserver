@@ -42,14 +42,11 @@ class Client:
                 if data.get("success"):
                     self.window.window.after(1, lambda: self.window.change_window())  # отрисовка интерфейса в основном потоке
                     if "applications" in data:
-                        time.sleep(1) # так как отрисовка происходит в основном потоке, а это нет, то ему нужно дать чуть подождать,
-                        # чтобы успело отрисоваться.Если есть другой способ дождаться отрисовки, то было бы круто, но я не знаю)
+                        time.sleep(1)
                         self.window.render_applications(data["applications"])
-                    self.window.set_functional(data["applications"])
+                    self.window.set_functional(data["applications"], telegram_id=self.telegram_id)
+                    logged_in = True
                 self.window.process_answer(data)
-
-
-
 
         print("Connection closed.")
         return

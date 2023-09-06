@@ -1,7 +1,11 @@
 import customtkinter as ctk
 import threading
-from PIL import Image
+import os
+import subprocess
 
+
+from PIL import Image
+from shlex import split
 from Client import Client
 
 
@@ -39,8 +43,16 @@ class Window:
 class LoginWindow(Window):
     def __init__(self):
         super().__init__()
-        self.client = Client(self)
+        self.button_delete = None
         self.thread_reader = None
+        self.button_add_to_list = None
+        self.list_of_apps = None
+        self.filter_entry = None
+        self.info_label = None
+        self.open_folder_button = None
+        self.info_frame = None
+        self.path_entry = None
+        self.client = Client(self)
 
         self.label_login = ctk.CTkLabel(master=self.main_frame, text="Telegram ID", font=("Robot", 16))
         self.tg_login_entry = ctk.CTkEntry(master=self.main_frame, placeholder_text="Token", width=200)
@@ -53,7 +65,7 @@ class LoginWindow(Window):
         self.checkbox.grid(row=3, column=3, padx=5, pady=5, sticky="n")
 
         self.login_button.configure(command=self.login)
-        self.list_of_apps = None
+        self.values = None
 
     def change_window(self):
         tabview = ctk.CTkTabview(master=self.main_frame)
@@ -66,13 +78,13 @@ class LoginWindow(Window):
 
         button_add_to_favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12,
                                                height=4)
-        button_delete = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
-        button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
-        open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
+        self.button_delete = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
+        self.button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
+        self.open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
 
         self.info_label = ctk.CTkLabel(text="", width=5, height=4, master=self.info_frame)
 
-        path_entry = ctk.CTkEntry(master=path_frame, placeholder_text="Path")
+        self.path_entry = ctk.CTkEntry(master=path_frame, placeholder_text="Path")
         self.filter_entry = ctk.CTkEntry(tabview.tab("Application"), placeholder_text="Filter")
         self.list_of_apps = ctk.CTkOptionMenu(tabview.tab("Application"), values=["Applications"])
 
@@ -81,10 +93,8 @@ class LoginWindow(Window):
         self.login_button.destroy()
         self.checkbox.destroy()
 
-        #self.main_frame.configure(fg_color='#1a1a1a')
-
         self.main_frame.grid(row=1, column=1, columnspan=5, rowspan=5, padx=20, pady=20, sticky="nsew")
-        tabview.grid(row=1, column=1, columnspan=5, rowspan=5, padx=20, pady=20, sticky="nsew")
+        tabview.grid(row=1, column=1, columnspan=5, rowspan=5, sticky="n")
 
         self.info_frame.configure(height=100,)
         self.main_frame.columnconfigure(5, weight=1)
@@ -109,30 +119,30 @@ class LoginWindow(Window):
         self.list_of_apps.configure(width=200, height=30, corner_radius=10)
         self.filter_entry.grid(row=1, column=5, padx=300)
         path_frame.grid(column=5)
-        open_folder_button.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
+        self.open_folder_button.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
 
         self.info_label.grid(row=5, column=3, padx=5, pady=(0, 15), sticky="s")
 
-        path_entry.grid(row=0, column=1, pady=5, padx=25)
+        self.path_entry.grid(row=0, column=1, pady=5, padx=25)
 
         self.filter_entry.configure(width=200)
-        button_add_to_list.grid(row=0, column=6, sticky="nsew", pady=10, padx=20)
+        self.button_add_to_list.grid(row=0, column=6, sticky="nsew", pady=10, padx=20)
         button_add_to_favorite.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
-        button_delete.grid(row=2, column=0, sticky="nsew", pady=10, padx=20)
+        self.button_delete.grid(row=2, column=0, sticky="nsew", pady=10, padx=20)
 
-        open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+        self.open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                      hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                      height=45)
         delete_favorite_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                          hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                          height=45)
-        button_add_to_list.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+        self.button_add_to_list.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                      hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                      height=45)
         button_add_to_favorite.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                          hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                          height=45)
-        button_delete.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+        self.button_delete.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                 hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                 height=45)
         f_open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
@@ -159,22 +169,38 @@ class LoginWindow(Window):
 
         self.error_label.configure(text=message, text_color=color)
 
-    def render_applications(self, apps: dict):
+    def render_applications(self, apps):
         self.list_of_apps.configure(values=[apps[i]["name"] for i in range(len(apps))])
 
-    def set_functional(self, apps: dict):
+    def set_functional(self, apps, telegram_id):
         self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(1,
                                                                              lambda: self.show_info
                                                                              (event, apps=apps, label=self.info_label)))
         self.filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.filter_entry,
                                                                                  list_app=self.list_of_apps, apps=apps))
 
+        self.open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_apps))
+
+        self.path_entry.bind('<Return>', lambda event: self.add_application(apps, telegram_id))
+        self.button_add_to_list.configure(command=lambda: self.add_application(apps, telegram_id=telegram_id))
+        self.button_delete.configure(command=lambda: self.delete_application(apps, telegram_id))
+
+    def open_path(self, event=None, list_app=None):
+        current_selection_in_list = list_app.get()
+        data = [self.values[current_selection_in_list]][0]
+        file_path = data[0]
+        try:
+            folder_path = os.path.dirname(file_path)
+            subprocess.run(['explorer', folder_path])
+        except Exception as ex:
+            print(ex)
+
     def show_info(self, event=None, apps=None, label=None):
         try:
-            values = {apps[i]["name"]: [apps[i]["path"], self.size_reader(int(apps[i]["size"]))] for i in range(len(apps))}
+            self.values = {apps[i]["name"]: [apps[i]["path"], self.size_reader(int(apps[i]["size"]))] for i in range(len(apps))}
             current_selection_in_list = self.list_of_apps.get()
             if current_selection_in_list:
-                data = [values[current_selection_in_list]][0]
+                data = [self.values[current_selection_in_list]][0]
                 self.info_frame.grid(row=5, column=3, padx=(60, 70), pady=(0, 15), sticky="s")
                 label.configure(
                      text=f"Name: {current_selection_in_list}\nPath: {data[0]}\nSize of path folder: {data[1]}",
@@ -184,20 +210,16 @@ class LoginWindow(Window):
 
     def filter_listbox(self, apps, event=None, entry=None, list_app=None,):
         user_input = entry.get()
-        # Get the current values in the ListOfApps option menu
-        current_values = list_app.cget("values")
-        # Clear the current values in the ListOfApps option menu
+        current_values = [apps[i]["name"] for i in range(len(apps))]
         list_app.configure(values=[])
-
-        # Iterate through all items in the data source and only insert the items that contain the user's input
         filtered_items = []
         for item in current_values:
             if user_input.lower() in item.lower():
                 filtered_items.append(item)
-        # update the ListOfApps option menu with filtered items
         if user_input == "":
-            filtered_items = [apps[i]["name"] for i in range(len(apps))]
+            filtered_items = current_values
         list_app.configure(values=filtered_items)
+        entry.bind('<Return>', lambda event: entry.delete(0, 'end'))
 
     def size_reader(self, file_size: int):
         if 1024 <= file_size < (1024 ** 2):
@@ -209,6 +231,103 @@ class LoginWindow(Window):
         else:
             size = f"{file_size} B"
         return size
+
+    def repeat_string(self, string):
+        return string.strip('"')
+
+    def add_application(self, apps, telegram_id):
+        command = "register_app"
+        file_path = self.path_entry.get()
+        self.path_entry.delete(0, 'end')
+        if self.is_valid_path(file_path):
+            file, file_path, file_size = self.get_file_info(file_path)
+            message = {
+                "command": command,
+                "data":
+                    {
+                        "user_id": telegram_id,
+                        "application": {
+                            "name": file,
+                            "path": file_path,
+                            "size": file_size,
+                            "status": False,
+                            "favorite": False
+                        }
+                    }
+            }
+            try:
+                self.client.send_message(message)
+            except Exception as ex:
+                print("Error", ex)
+            print("request sended")
+        self.render_applications(apps)
+        print("list updated")
+
+        return
+
+    def delete_application(self, apps, telegram_id, list_app=None):
+        command = "delete_app"
+        message = None
+        current_selection_in_list = self.list_of_apps.get()
+        print(self.list_of_apps.cget("values"))
+        for item in apps:
+            if item["name"] == current_selection_in_list:
+                print(item["id"])
+                app_id = item["id"]
+                message = {
+                    "command": command,
+                    "data":
+                        {
+                            "user_id": telegram_id,
+                            "application": {
+                                "id": app_id
+                            }
+                        }}
+                apps.remove(item)
+                print(apps)
+                self.render_applications(apps)
+
+        if message:
+            try:
+                self.client.send_message(message)
+            except Exception as ex:
+                print("Error", ex)
+
+    def is_valid_path(self, file_path):
+        split_path = split(file_path)
+        joined_path = os.path.join(*split_path)
+        if os.path.exists(joined_path):
+            return True
+        else:
+            return False
+
+    def get_file_info(self, file_path):
+        file_path = self.repeat_string(file_path)
+        file_path = r"{}".format(file_path)
+        file = os.path.basename(file_path)
+        file_size = 0
+        if file_path.endswith('.lnk'):  # windows
+            import win32com.client
+            try:
+                shell = win32com.client.Dispatch("WScript.Shell")
+                file_path = shell.CreateShortCut(file_path).Targetpath
+            except Exception as ex:
+                print(ex)
+        elif file_path.endswith(".desktop"):  # linux
+            import xdg.DesktopEntry
+            try:
+                entry = xdg.DesktopEntry.DesktopEntry(file_path)
+                file_path = entry.getPath()
+            except Exception as ex:
+                print(ex)
+        for path, dirs, files in os.walk(os.path.dirname(file_path)):
+            for f in files:
+                fp = os.path.join(path, f)
+                file_size += os.path.getsize(fp)
+        file_path = os.path.abspath(file_path)
+        print(file, file_path, file_size)
+        return file, file_path, file_size
+
 
 if __name__ == "__main__":
     app = LoginWindow()
