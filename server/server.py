@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import pytest
-from server.models import Customer
+from server.models import Customer, Application
 from asyncio import StreamReader, StreamWriter
 
 from server.command_handlers import (
@@ -13,9 +13,8 @@ from server.command_handlers import (
     delete_app,
     send_response
 )
-from server.utils import get_users_apps
 
-logging.basicConfig(filemode="console", encoding="utf-8", level=logging.DEBUG)
+logging.basicConfig(filemode="console", encoding="utf-8", level=logging.INFO)
 logger = logging.getLogger("server")
 
 
@@ -32,43 +31,61 @@ class Server:
         except pytest.PytestUnraisableExceptionWarning:
             pass
 
+    @staticmethod
+    async def _listen_messages(reader, writer, user_id):
+        while (data := await asyncio.wait_for(reader.read(1024), 3600)) != b'':
+            message = json.loads(data.decode())
+            logger.info("Message: %s", message)
+            await send_response(writer, {"SUCCESS": True, "data": {"user_id": user_id}}, close_conn=False)
+
+            command = message.get("command", None)
+            if command:
+                # process commands from client
+                if command == "get_info":
+                    await get_info(reader, writer, message)
+
+                elif command == "get_application_info":
+                    await get_application_info(reader, writer, message)
+
+                elif command == "register_app":
+                    await register_app(reader, writer, message)
+
+                elif command == "delete_app":
+                    await delete_app(reader, writer, message)
+
     async def client_connected(self, reader: StreamReader, writer: StreamWriter):
         message = await reader.read(1024)
         logger.info("Message: %s", message.decode())
         message = json.loads(message)
 
-        command = message.get("command", None)
+        user_id = message.get("data", {}).get("user_id", None)
+        if not user_id:
+            await send_response(writer, {"success": False, "message": "User_id is missing."})
+            return
 
+        command = message.get("command", None)
         if command:
+            # process commands from bot
             if command == "register_user":
                 await register_user(reader, writer, message)
 
-            elif command == "get_info":
-                await get_info(reader, writer, message)
-
-            elif command == "get_application_info":
-                await get_application_info(reader, writer, message)
-
             elif command == "connect":
-                user_id = message.get("data", {}).get("user_id", None)
-                existing_customer = await Customer.get_or_none(telegram_id=user_id)
-                if existing_customer:
-                    self.users[str(user_id)] = {"reader": reader, "writer": writer}
-                    success = True
-                    message = "Connected successfully"
-                    logger.info(
-                        "New client connection: %s. Number of connected clients = %s",
-                        user_id, len(self.users))
+                if not await Customer.get_or_none(telegram_id=user_id):
+                    await Customer.create_with_telegram_id(user_id)
 
-                else:
-                    success = False
-                    message = "Wrong telegram ID"
-                res = await get_users_apps(user_id)
+                self.users[str(user_id)] = {"writer": writer}
+                logger.info(
+                    "New client connection: %s. Number of connected clients = %s",
+                    user_id,
+                    len(self.users)
+                )
+
+                asyncio.create_task(self._listen_messages(reader, writer, user_id))
+
                 response = {
-                    "success": success,
-                    "message": message,
-                    "applications": res
-
+                    "success": True,
+                    "message": "Connected successfully",
+                    "applications": await Application.get_apps_by_user(user_id)
                 }
                 await send_response(writer, response, close_conn=False)
 
@@ -81,12 +98,5 @@ class Server:
                     await send_response(user_writer, data, close_conn=False)
                 writer.close()
                 await writer.wait_closed()
-
-            elif command == "register_app":
-                await register_app(reader, writer, message)
-
-            elif command == "delete_app":
-                await delete_app(reader, writer, message)
-
         else:
             await send_response(writer, {"success": False, "message": "Command not found."})

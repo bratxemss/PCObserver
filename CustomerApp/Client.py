@@ -50,8 +50,10 @@ class Client:
         print("Connection closed.")
         return
 
-    def send_message(self, message: dict):
+    async def send_message(self, message: dict):
+        print('asdasdasd')
+
         self.writer.write(json.dumps(message).encode())
-        asyncio.create_task(self.writer.drain())
+        await self.writer.drain()
 
 #print(Client(command="connect", data={"user_id": 1}))

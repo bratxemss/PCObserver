@@ -68,6 +68,7 @@ class LoginWindow(Window):
         button_add_to_favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12,
                                                height=4)
         button_delete = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
+        button_delete.configure(command=self.send_delete)
         button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
         open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
 
@@ -137,17 +138,21 @@ class LoginWindow(Window):
         f_open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                        hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                        height=45)
-        (self.client.send_message({
-            "command": "get_info",
-            "user_id": self.client.telegram_id
-        }))
 
     def login(self):
-        self.client.telegram_id = self.tg_login_entry.get()
+        # self.client.telegram_id = self.tg_login_entry.get()
+        self.client.telegram_id = "6174434600"
 
+        # TODO: решить проблему с созданием новых потоков
         self.thread_reader = threading.Thread(target=self.client.run_connection, daemon=True)
         if not self.thread_reader.is_alive():
             self.thread_reader.start()
+
+    def send_delete(self):
+        # example for testing
+        asyncio.run(
+            self.client.send_message({"command": "test", "data": {"user_id": 6174434600}})
+        )
 
     def process_answer(self, data):
         message = data.get("message")
