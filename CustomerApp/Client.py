@@ -1,7 +1,5 @@
 import asyncio
 import json
-import time
-
 from config import defaults
 
 
@@ -23,10 +21,13 @@ class Client:
 
     async def connection(self):
         self.reader, self.writer = await asyncio.open_connection(self.IP, self.Port)
-        self.send_message({
+        message = json.dumps({
             "command": "connect",
             "data": {"user_id": self.telegram_id}
-        })
+        }).encode()
+        self.writer.write(message)
+        await self.writer.drain()
+
         logged_in = False
         while (message := await self.reader.read(1024)) != b'':
             response = message.decode()
@@ -40,19 +41,19 @@ class Client:
 
             if not logged_in:
                 if data.get("success"):
-                    self.window.window.after(1, lambda: self.window.change_window())  # отрисовка интерфейса в основном потоке
-                    if "applications" in data:
-                        time.sleep(1)
-                        self.window.render_applications(data["applications"])
-                    self.window.set_functional(data["applications"], telegram_id=self.telegram_id)
-                    logged_in = True
+                    self.window.change_window()
                 self.window.process_answer(data)
+
+            if "applications" in data:
+                self.window.render_applications(data["applications"])
 
         print("Connection closed.")
         return
 
-    def send_message(self, message: dict):
+    async def send_message(self, message: dict):
+        print('asdasdasd')
+
         self.writer.write(json.dumps(message).encode())
-        asyncio.create_task(self.writer.drain())
+        await self.writer.drain()
 
 #print(Client(command="connect", data={"user_id": 1}))

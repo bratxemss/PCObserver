@@ -1,10 +1,8 @@
 import json
 import logging
-from uuid import uuid4
 
 from asyncio import StreamReader, StreamWriter
 from server.models import Customer, Application
-from server.utils import get_users_apps,get_user_app
 
 logger = logging.getLogger("commands handlers")
 
@@ -19,27 +17,20 @@ async def send_response(writer, response, close_conn=True):
 
 async def register_user(reader: StreamReader, writer: StreamWriter, message):
     user_id = message.get("data", {}).get("user_id", None)
-    existing_customer = await Customer.get_or_none(telegram_id=user_id)
-    if not existing_customer:
-        await Customer.create(
-            telegram_id=user_id,
-            user_token=str(uuid4()),
-            pc_token=str(uuid4())
-        )
-    info = []
-    information = await Customer.select().where(
-        Customer.telegram_id == user_id
-    )
-    for user in information:
-        info.append({
+    user = await Customer.get_or_none(telegram_id=user_id)
+    if not user:
+        user = await Customer.create_with_telegram_id(user_id)
+    info = [
+        {
             "telegram_id": user.telegram_id,
             "user_token": user.user_token,
             "pc_token": user.pc_token,
-        })
+        }
+    ]
     response = {
         "success": True,
         "message": "User login successfully",
-        "information": info
+        "data": info
     }
 
     await send_response(writer, response)
@@ -50,7 +41,7 @@ async def get_info(reader: StreamReader, writer: StreamWriter, message):
     user_id = message.get("data", {}).get("user_id", None)
     apps = []
     if user_id:
-        apps = await get_users_apps(user_id)
+        apps = await Application.get_apps_by_user(user_id)
         if apps:
             success = True
             message = "Connected successfully"
@@ -74,7 +65,7 @@ async def get_application_info(reader: StreamReader, writer: StreamWriter, messa
     logger.debug(f"Get app info about user {user_id}")
     app_info = []
     if user_id and app_id:
-        app_info = await get_user_app(user_id, app_id)
+        app_info = await Application.get_app_by_id(user_id, app_id)
         if app_info:
             success = True
             message = "Application information found successfully"
@@ -126,7 +117,7 @@ async def register_app(reader: StreamReader, writer: StreamWriter, message):
     response = {
         "success": success,
         "message": message,
-        "applications": await get_users_apps(user_id)
+        "applications": await Application.get_apps_by_user(user_id)
     }
 
     await send_response(writer, response)

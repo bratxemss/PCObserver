@@ -1,3 +1,4 @@
+import asyncio
 import customtkinter as ctk
 import threading
 import os
@@ -79,6 +80,7 @@ class LoginWindow(Window):
         button_add_to_favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12,
                                                height=4)
         self.button_delete = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
+        self.button_delete.configure(command=self.send_delete)
         self.button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
         self.open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
 
@@ -150,11 +152,19 @@ class LoginWindow(Window):
                                        height=45)
 
     def login(self):
-        self.client.telegram_id = self.tg_login_entry.get()
+        # self.client.telegram_id = self.tg_login_entry.get()
+        self.client.telegram_id = "6174434600"
 
+        # TODO: решить проблему с созданием новых потоков
         self.thread_reader = threading.Thread(target=self.client.run_connection, daemon=True)
         if not self.thread_reader.is_alive():
             self.thread_reader.start()
+
+    def send_delete(self):
+        # example for testing
+        asyncio.run(
+            self.client.send_message({"command": "test", "data": {"user_id": 6174434600}})
+        )
 
     def process_answer(self, data):
         message = data.get("message")
@@ -332,5 +342,3 @@ class LoginWindow(Window):
 if __name__ == "__main__":
     app = LoginWindow()
     app.window.mainloop()
-
-
