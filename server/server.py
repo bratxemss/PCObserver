@@ -43,6 +43,13 @@ class Server:
                 if command == "get_info":
                     await get_info(reader, writer, message)
 
+                elif command == "test":
+                    await send_response(
+                        writer,
+                        {"SUCCESS": True, "data": {"user_id": "TESTED ID"}},
+                        close_conn=False
+                    )
+
                 elif command == "get_application_info":
                     await get_application_info(reader, writer, message)
 
