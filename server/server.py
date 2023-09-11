@@ -36,7 +36,6 @@ class Server:
         while (data := await asyncio.wait_for(reader.read(1024), 3600)) != b'':
             message = json.loads(data.decode())
             logger.info("Message: %s", message)
-            await send_response(writer, {"SUCCESS": True, "data": {"user_id": user_id}}, close_conn=False)
 
             command = message.get("command", None)
             if command:

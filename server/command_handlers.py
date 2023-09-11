@@ -20,16 +20,14 @@ async def register_user(reader: StreamReader, writer: StreamWriter, message):
     user = await Customer.get_or_none(telegram_id=user_id)
     if not user:
         user = await Customer.create_with_telegram_id(user_id)
-    info = [
-        {
+    info = {
             "telegram_id": user.telegram_id,
             "user_token": user.user_token,
             "pc_token": user.pc_token,
-        }
-    ]
+    }
     response = {
         "success": True,
-        "message": "User login successfully",
+        "message": "User registered successfully",
         "data": info
     }
 

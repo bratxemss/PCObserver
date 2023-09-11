@@ -11,7 +11,6 @@ class Client:
         self.window = window
         self.reader = None
         self.writer = None
-        self.current_response = None
 
     def __repr__(self):
         return f"Connected to {self.IP}:{self.Port}"

@@ -27,13 +27,19 @@ def server(event_loop, unused_tcp_port):
 class TestClient:
     def __init__(self, server):
         self.server_port = server
+        self.reader = None
+        self.writer = None
+
+    async def _run(self):
+        self.reader, self.writer = await asyncio.open_connection('127.0.0.1', self.server_port)
 
     async def send_message(self, message: str or dict) -> str:
-        reader, writer = await asyncio.open_connection('127.0.0.1', self.server_port)
+        if not self.reader:
+            await self._run()
 
-        writer.write(json.dumps(message).encode())
-        await writer.drain()
-        result = await reader.read()
+        self.writer.write(json.dumps(message).encode())
+        await self.writer.drain()
+        result = await self.reader.read(1024)
 
         return json.loads(result.decode())
 
