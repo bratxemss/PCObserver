@@ -28,9 +28,10 @@ class Client:
         await self.writer.drain()
 
         logged_in = False
+
         while (message := await self.reader.read(1024)) != b'':
             response = message.decode()
-            print(response)
+
             try:
                 data = json.loads(response)
             except:  # noqa
@@ -40,18 +41,21 @@ class Client:
 
             if not logged_in:
                 if data.get("success"):
-                    self.window.change_window()
+                    self.window.window.after(1, lambda: self.window.change_window())
                 self.window.process_answer(data)
+                if "applications" in data:
+                    self.window.set_functional(apps=data["applications"], telegram_id=self.telegram_id)
+                logged_in = True
 
             if "applications" in data:
                 self.window.render_applications(data["applications"])
 
+        else:
+            print("message:", message)
         print("Connection closed.")
         return
 
     async def send_message(self, message: dict):
-        print('asdasdasd')
-
         self.writer.write(json.dumps(message).encode())
         await self.writer.drain()
 

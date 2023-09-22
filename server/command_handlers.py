@@ -86,7 +86,6 @@ async def get_application_info(reader: StreamReader, writer: StreamWriter, messa
 async def register_app(reader: StreamReader, writer: StreamWriter, message):
     user_id = message.get("data", {}).get("user_id", None)
     application = message.get("data", {}).get("application", None)
-
     success = True
     message = None
     if user_id and application:
@@ -118,7 +117,7 @@ async def register_app(reader: StreamReader, writer: StreamWriter, message):
         "applications": await Application.get_apps_by_user(user_id)
     }
 
-    await send_response(writer, response)
+    await send_response(writer, response, close_conn=False)
 
 
 async def delete_app(reader: StreamReader, writer: StreamWriter, message):
@@ -142,4 +141,4 @@ async def delete_app(reader: StreamReader, writer: StreamWriter, message):
     else:
         response = {"success": False, "message": "Invalid data."}
 
-    await send_response(writer, response)
+    await send_response(writer, response,close_conn=False)

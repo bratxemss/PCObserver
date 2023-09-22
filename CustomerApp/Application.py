@@ -80,7 +80,6 @@ class LoginWindow(Window):
         button_add_to_favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12,
                                                height=4)
         self.button_delete = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
-        self.button_delete.configure(command=self.send_delete)
         self.button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
         self.open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
 
@@ -160,11 +159,11 @@ class LoginWindow(Window):
         if not self.thread_reader.is_alive():
             self.thread_reader.start()
 
-    def send_delete(self):
-        # example for testing
-        asyncio.run(
-            self.client.send_message({"command": "test", "data": {"user_id": 6174434600}})
-        )
+    # def send_delete(self):
+    #     # example for testing
+    #     asyncio.run(
+    #         self.client.send_message({"command": "test", "data": {"user_id": 6174434600}})
+    #     )
 
     def process_answer(self, data):
         message = data.get("message")
@@ -265,10 +264,8 @@ class LoginWindow(Window):
                         }
                     }
             }
-            try:
-                self.client.send_message(message)
-            except Exception as ex:
-                print("Error", ex)
+            asyncio.run(
+                self.client.send_message(message))
             print("request sended")
         self.render_applications(apps)
         print("list updated")
@@ -298,10 +295,8 @@ class LoginWindow(Window):
                 self.render_applications(apps)
 
         if message:
-            try:
-                self.client.send_message(message)
-            except Exception as ex:
-                print("Error", ex)
+            asyncio.run(
+                self.client.send_message(message))
 
     def is_valid_path(self, file_path):
         split_path = split(file_path)
