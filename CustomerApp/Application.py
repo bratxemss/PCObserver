@@ -44,6 +44,7 @@ class Window:
 class LoginWindow(Window):
     def __init__(self):
         super().__init__()
+        self.favorite_list = []
         self.button_delete = None
         self.thread_reader = None
         self.button_add_to_list = None
@@ -77,7 +78,7 @@ class LoginWindow(Window):
 
         path_frame = ctk.CTkFrame(tabview.tab("Application"), )
 
-        button_add_to_favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12,
+        self.button_add_to_favorite = ctk.CTkButton(tabview.tab("Application"), text="Add to Favorite", width=12,
                                                height=4)
         self.button_delete = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
         self.button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
@@ -101,20 +102,20 @@ class LoginWindow(Window):
         self.main_frame.columnconfigure(5, weight=1)
         self.main_frame.rowconfigure(5, weight=1)
 
-        list_of_favorite_apps = ctk.CTkOptionMenu(tabview.tab("Favorite"), values=["Favorite"])
+        self.list_of_favorite_apps = ctk.CTkOptionMenu(tabview.tab("Favorite"), values=["Favorite"])
 
-        delete_favorite_button = ctk.CTkButton(tabview.tab("Favorite"), text="Delete Favoriite", width=12, height=4)
-        f_open_folder_button = ctk.CTkButton(tabview.tab("Favorite"), text="Open path", width=12, height=4)
-        favorite_filter_entry = ctk.CTkEntry(tabview.tab("Favorite"), placeholder_text="Filter")
+        self.delete_favorite_button = ctk.CTkButton(tabview.tab("Favorite"), text="Delete Favoriite", width=12, height=4)
+        self.f_open_folder_button = ctk.CTkButton(tabview.tab("Favorite"), text="Open path", width=12, height=4)
+        self.favorite_filter_entry = ctk.CTkEntry(tabview.tab("Favorite"), placeholder_text="Filter")
 
         # list_of_favorite_apps.configure(values=FavoriteList)
-        list_of_favorite_apps.grid(row=0, column=5, padx=300)
-        list_of_favorite_apps.configure(width=200, height=30, corner_radius=10)
+        self.list_of_favorite_apps.grid(row=0, column=5, padx=300)
+        self.list_of_favorite_apps.configure(width=200, height=30, corner_radius=10)
 
-        favorite_filter_entry.grid(row=1, column=5, pady=5, )
+        self.favorite_filter_entry.grid(row=1, column=5, pady=5, )
 
-        f_open_folder_button.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
-        delete_favorite_button.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
+        self.f_open_folder_button.grid(row=0, column=0, sticky="nsew", pady=10, padx=20)
+        self.delete_favorite_button.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
 
         self.list_of_apps.grid(row=0, column=5, padx=300)
         self.list_of_apps.configure(width=200, height=30, corner_radius=10)
@@ -128,25 +129,25 @@ class LoginWindow(Window):
 
         self.filter_entry.configure(width=200)
         self.button_add_to_list.grid(row=0, column=6, sticky="nsew", pady=10, padx=20)
-        button_add_to_favorite.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
+        self.button_add_to_favorite.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
         self.button_delete.grid(row=2, column=0, sticky="nsew", pady=10, padx=20)
 
         self.open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                      hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                      height=45)
-        delete_favorite_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+        self.delete_favorite_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                          hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                          height=45)
         self.button_add_to_list.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                      hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                      height=45)
-        button_add_to_favorite.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+        self.button_add_to_favorite.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                          hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                          height=45)
         self.button_delete.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                 hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                 height=45)
-        f_open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+        self.f_open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                        hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                        height=45)
 
@@ -178,21 +179,32 @@ class LoginWindow(Window):
 
         self.error_label.configure(text=message, text_color=color)
 
-    def render_applications(self, apps):
-        self.list_of_apps.configure(values=[apps[i]["name"] for i in range(len(apps))])
+    def render_applications(self, apps, label=None):
+        label.configure(values=[apps[i]["name"] for i in range(len(apps))])
 
     def set_functional(self, apps, telegram_id):
         self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(1,
                                                                              lambda: self.show_info
-                                                                             (event, apps=apps, label=self.info_label)))
+                                                                             (event, apps=apps, list_of_app=self.list_of_apps, label=self.info_label)))
+
         self.filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.filter_entry,
                                                                                  list_app=self.list_of_apps, apps=apps))
+        self.favorite_filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.favorite_filter_entry,
+                                                                                 list_app=self.list_of_favorite_apps, apps=apps))
+        # self.list_of_favorite_apps.bind("<Button-1>", lambda event: self.window.after(1,
+        #                                                                      lambda: self.show_info
+        #                                                                      (event, apps=apps, list_of_app=self.list_of_favorite_apps,label=self.info_label)))
 
+        self.f_open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_favorite_apps))
         self.open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_apps))
 
-        self.path_entry.bind('<Return>', lambda event: self.add_application(apps, telegram_id))
-        self.button_add_to_list.configure(command=lambda: self.add_application(apps, telegram_id=telegram_id))
-        self.button_delete.configure(command=lambda: self.delete_application(apps, telegram_id))
+        self.path_entry.bind('<Return>', lambda event: self.add_application(apps, telegram_id, label=self.list_of_apps))
+        self.button_add_to_list.configure(command=lambda: self.add_application(apps, telegram_id=telegram_id,
+                                                                               label=self.list_of_apps))
+        self.button_delete.configure(command=lambda: self.delete_application(apps, telegram_id,
+                                                                             list_app=self.list_of_apps))
+        self.button_add_to_favorite.configure(command=lambda: self.add_to_favorite(telegram_id=telegram_id, apps=apps,))
+        self.delete_favorite_button.configure(command=lambda: self.remove_from_favorite(apps,telegram_id))
 
     def open_path(self, event=None, list_app=None):
         current_selection_in_list = list_app.get()
@@ -204,10 +216,10 @@ class LoginWindow(Window):
         except Exception as ex:
             print(ex)
 
-    def show_info(self, event=None, apps=None, label=None):
+    def show_info(self, event=None, apps=None,  list_of_app=None, label=None):
         try:
             self.values = {apps[i]["name"]: [apps[i]["path"], self.size_reader(int(apps[i]["size"]))] for i in range(len(apps))}
-            current_selection_in_list = self.list_of_apps.get()
+            current_selection_in_list = list_of_app.get()
             if current_selection_in_list:
                 data = [self.values[current_selection_in_list]][0]
                 self.info_frame.grid(row=5, column=3, padx=(60, 70), pady=(0, 15), sticky="s")
@@ -244,7 +256,7 @@ class LoginWindow(Window):
     def repeat_string(self, string):
         return string.strip('"')
 
-    def add_application(self, apps, telegram_id):
+    def add_application(self, apps, telegram_id, label=None):
         command = "register_app"
         file_path = self.path_entry.get()
         self.path_entry.delete(0, 'end')
@@ -267,7 +279,7 @@ class LoginWindow(Window):
             asyncio.run(
                 self.client.send_message(message))
             print("request sended")
-        self.render_applications(apps)
+        self.render_applications(apps, label=label)
         print("list updated")
 
         return
@@ -275,8 +287,8 @@ class LoginWindow(Window):
     def delete_application(self, apps, telegram_id, list_app=None):
         command = "delete_app"
         message = None
-        current_selection_in_list = self.list_of_apps.get()
-        print(self.list_of_apps.cget("values"))
+        current_selection_in_list = list_app.get()
+        print(list_app.cget("values"))
         for item in apps:
             if item["name"] == current_selection_in_list:
                 print(item["id"])
@@ -291,12 +303,68 @@ class LoginWindow(Window):
                             }
                         }}
                 apps.remove(item)
-                print(apps)
-                self.render_applications(apps)
+                self.render_applications(apps, label=list_app)
 
         if message:
             asyncio.run(
                 self.client.send_message(message))
+
+    def add_to_favorite(self, apps, telegram_id, event=None ):
+        try:
+            message = None
+            command = "add_to_favorite"
+            current_selection_in_list = self.list_of_apps.get()
+            for item in apps:
+                if item["name"] == current_selection_in_list and not item["favorite"]:
+                    item["favorite"] = True
+                    self.favorite_list.append(item)
+                    app_id = item["id"]
+                    message = {
+                        "command": command,
+                        "data":
+                            {
+                                "user_id": telegram_id,
+                                "application": {
+                                    "id": app_id
+                                }
+                            }}
+
+            if message:
+                asyncio.run(
+                    self.client.send_message(message))
+
+            self.list_of_favorite_apps.configure(
+                values=[item["name"] for item in self.favorite_list if item["favorite"]])
+        except Exception as ex:
+            print(ex)
+
+    def remove_from_favorite(self,apps,telegram_id,event=None):
+        try:
+            message = None
+            command = "remove_from_favorite"
+            values = [apps[i] for i in range(len(apps)) if apps[i]["favorite"]]
+            current_selection_in_list = self.list_of_favorite_apps.get()
+            for item in values:
+                if item["name"] == current_selection_in_list and item["favorite"]:
+                    item["favorite"] = False
+                    self.favorite_list.remove(item)
+                    app_id = item["id"]
+                    message = {
+                        "command": command,
+                        "data":
+                            {
+                                "user_id": telegram_id,
+                                "application": {
+                                    "id": app_id
+                                }
+                            }}
+            if message:
+                asyncio.run(
+                    self.client.send_message(message))
+            self.list_of_favorite_apps.configure(
+                values=[item["name"] for item in self.favorite_list if item["favorite"]])
+        except Exception as ex:
+            print(ex)
 
     def is_valid_path(self, file_path):
         split_path = split(file_path)

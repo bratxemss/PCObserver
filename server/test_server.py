@@ -103,8 +103,6 @@ async def test_get_info(client, application):
 
     
 async def test_delete_app(client, application):
-    from .models import Application
-
     user_id = 1235641635
     message = {"command": "connect", "data": {"user_id": user_id}}
     await client.send_message(message)
@@ -126,3 +124,57 @@ async def test_delete_app(client, application):
     assert response["success"]
     assert response["message"] == "Deleted successfully"
     assert response["app_id"] == message["data"]["application"]["id"]
+
+
+async def test_add_to_favorite(client, application):
+    user_id = 1235641635
+    application_id = 1
+
+    connect_message = {"command": "connect", "data": {"user_id": user_id}}
+    await client.send_message(connect_message)
+
+    initial_application = await Application.get_app_by_id(user_id, application_id)
+    assert initial_application[0].get("favorite") is False
+
+    response = await client.send_message({
+        "command": "add_to_favorite",
+        "data": {"user_id": user_id, "application": {"id": application_id}}
+    })
+
+    updated_application = await Application.get_app_by_id(user_id, application_id)
+    assert updated_application[0].get("favorite") is True
+
+    assert response
+    assert response["success"]
+    assert response["message"] == "Application successfully added to favorite"
+
+
+async def test_remove_from_favorite(client):
+    await Application.create(
+        user=1235641635,
+        app_name="app_name",
+        app_path="app_path",
+        app_size="app_size",
+        app_status=False,
+        app_favorite=True
+    )
+    user_id = 1235641635
+    application_id = 1
+
+    connect_message = {"command": "connect", "data": {"user_id": user_id}}
+    await client.send_message(connect_message)
+
+    initial_application = await Application.get_app_by_id(user_id, application_id)
+    assert initial_application[0].get("favorite") is True
+
+    response = await client.send_message({
+        "command": "remove_from_favorite",
+        "data": {"user_id": user_id, "application": {"id": application_id}}
+    })
+
+    updated_application = await Application.get_app_by_id(user_id, application_id)
+    assert updated_application[0].get("favorite") is False
+
+    assert response
+    assert response["success"]
+    assert response["message"] == "Application successfully removed from favorite"
