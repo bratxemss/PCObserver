@@ -31,7 +31,7 @@ class Client:
 
         while (message := await self.reader.read(1024)) != b'':
             response = message.decode()
-
+            print("message:", message)
             try:
                 data = json.loads(response)
             except:  # noqa
@@ -50,8 +50,6 @@ class Client:
             if "applications" in data:
                 self.window.render_applications(data["applications"])
 
-        else:
-            print("message:", message)
         print("Connection closed.")
         return
 

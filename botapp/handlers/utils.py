@@ -8,6 +8,7 @@ from pyrogram import filters
 def dynamic_data_filter(data):
     async def func(flt, _, query):
         return bool(re.match(flt.data, query.data))
+
     return filters.create(func, data=data)
 
 
@@ -56,3 +57,11 @@ async def get_application_data(user_id, app_id):
     })
     return await(reader(json.loads(response)))
 
+
+async def send_turning_request(user_id, app_id, command: str):
+    response = await bot.servers_client.send_message(command="turn", data={
+        "user_id": user_id,
+        "app_id": app_id,
+        "command": command
+    })
+    return await(reader(json.loads(response)))

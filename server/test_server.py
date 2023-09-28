@@ -126,3 +126,14 @@ async def test_delete_app(client, application):
     assert response["success"]
     assert response["message"] == "Deleted successfully"
     assert response["app_id"] == message["data"]["application"]["id"]
+
+# make this test get response from command "turn"
+#
+# async def test_turn_on(client, application):
+#     user_id = 1235641635
+#     message = {"command": "connect", "data": {"user_id": user_id}}
+#     await client.send_message(message)
+#
+#     message = {"command": "turn", "data": {"user_id": user_id, "app_id": 1, "command": "On"}}
+#     response = await client.send_message(message)
+#     assert response
