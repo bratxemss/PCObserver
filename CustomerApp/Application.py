@@ -191,9 +191,10 @@ class LoginWindow(Window):
                                                                                  list_app=self.list_of_apps, apps=apps))
         self.favorite_filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.favorite_filter_entry,
                                                                                  list_app=self.list_of_favorite_apps, apps=apps))
-        # self.list_of_favorite_apps.bind("<Button-1>", lambda event: self.window.after(1,
-        #                                                                      lambda: self.show_info
-        #                                                                      (event, apps=apps, list_of_app=self.list_of_favorite_apps,label=self.info_label)))
+
+        self.list_of_favorite_apps.bind("<Button-1>", lambda event: self.window.after(1,
+                                                                             lambda: self.show_info
+                                                                             (event, apps=apps, list_of_app=self.list_of_favorite_apps,label=self.info_label)))
 
         self.f_open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_favorite_apps))
         self.open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_apps))
