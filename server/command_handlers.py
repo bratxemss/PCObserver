@@ -141,4 +141,55 @@ async def delete_app(reader: StreamReader, writer: StreamWriter, message):
     else:
         response = {"success": False, "message": "Invalid data."}
 
-    await send_response(writer, response,close_conn=False)
+    await send_response(writer, response, close_conn=False)
+
+
+async def add_to_favorite(reader: StreamReader, writer: StreamWriter, message):
+    user_id = message.get("data", {}).get("user_id", None)
+    app_id = message.get("data", {}).get("application", {}).get("id")
+    if user_id and app_id:
+        try:
+            if await Application.select().where(
+                    Application.id == app_id,
+                    Application.user_id == user_id).first():
+
+                await Application.update(app_favorite=True).where(
+                    Application.id == app_id, Application.user_id == user_id)
+                success = True
+                message = "Application successfully added to favorite"
+            else:
+                success = False
+                message = "Application is already in favorite"
+
+        except Exception as ex:
+            success = False
+            message = f"Error:{ex}"
+
+        response = {"success": success, "message": message}
+        await send_response(writer, response, close_conn=False)
+
+
+async def remove_from_favorite(reader: StreamReader, writer: StreamWriter, message):
+    user_id = message.get("data", {}).get("user_id", None)
+    app_id = message.get("data", {}).get("application", {}).get("id")
+    if user_id and app_id:
+        try:
+            if await Application.select().where(
+                    Application.id == app_id,
+                    Application.user_id == user_id).first():
+
+                await Application.update(app_favorite=False).where(
+                    Application.id == app_id, Application.user_id == user_id)
+                success = True
+                message = "Application successfully removed from favorite"
+            else:
+                success = False
+                message = "Application is not in favorite"
+
+        except Exception as ex:
+            success = False
+            message = f"Error:{ex}"
+
+        response = {"success": success, "message": message}
+        await send_response(writer, response, close_conn=False)
+

@@ -11,7 +11,9 @@ from server.command_handlers import (
     get_application_info,
     register_app,
     delete_app,
-    send_response
+    send_response,
+    add_to_favorite,
+    remove_from_favorite
 )
 
 logging.basicConfig(filemode="console", encoding="utf-8", level=logging.INFO)
@@ -58,6 +60,12 @@ class Server:
 
                 elif command == "delete_app":
                     await delete_app(reader, writer, message)
+
+                elif command == "add_to_favorite":
+                    await add_to_favorite(reader, writer, message)
+
+                elif command == "remove_from_favorite":
+                    await remove_from_favorite(reader, writer, message)
 
     async def client_connected(self, reader: StreamReader, writer: StreamWriter):
         message = await reader.read(1024)
