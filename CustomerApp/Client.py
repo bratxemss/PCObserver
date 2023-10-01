@@ -32,6 +32,7 @@ class Client:
         while (message := await self.reader.read(1024)) != b'':
             response = message.decode()
             print("message:", message)
+
             try:
                 data = json.loads(response)
             except:  # noqa
@@ -45,10 +46,15 @@ class Client:
                 self.window.process_answer(data)
                 if "applications" in data:
                     self.window.set_functional(apps=data["applications"], telegram_id=self.telegram_id)
+                    for i in data["applications"]:
+                        if i["favorite"]:
+                            self.window.favorite_list.append(i)
+
                 logged_in = True
 
             if "applications" in data:
-                self.window.render_applications(data["applications"])
+                self.window.render_applications(data["applications"],label=self.window.list_of_apps)
+                self.window.render_applications(self.window.favorite_list, label=self.window.list_of_favorite_apps)
 
         print("Connection closed.")
         return
