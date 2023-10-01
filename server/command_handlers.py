@@ -141,7 +141,35 @@ async def delete_app(reader: StreamReader, writer: StreamWriter, message):
     else:
         response = {"success": False, "message": "Invalid data."}
 
-    await send_response(writer, response, close_conn=False)
+    await send_response(writer, response,close_conn=False)
+
+
+async def turn(reader: StreamReader, writer: StreamWriter, message, server_users):
+    user_id = message.get("data", {}).get("user_id", None)
+    app_id = message.get("data", {}).get("app_id", None)
+    command = message.get("data", {}).get("command", None)
+    if user_id and app_id:
+        if server_users:
+            user_writer = server_users[user_id]["writer"]
+        else:
+            user_writer = None
+        app = await Application.get_app_by_id(user_id, app_id)
+        if user_writer and app:
+            success = True
+            if command == "On":
+                message = "Application turning on"
+            else:
+                message = "Application turning off"
+            await send_response(user_writer, {"success": success, "message": message, "app_info": app},
+                                close_conn=False)
+        else:
+            success = False
+            message = "P.C app is not online or app is not in list"
+    else:
+        success = False
+        message = "Wrong data"
+    response = {"success": success, "message": message}
+    await send_response(writer, response)
 
 
 async def add_to_favorite(reader: StreamReader, writer: StreamWriter, message):
@@ -192,4 +220,3 @@ async def remove_from_favorite(reader: StreamReader, writer: StreamWriter, messa
 
         response = {"success": success, "message": message}
         await send_response(writer, response, close_conn=False)
-

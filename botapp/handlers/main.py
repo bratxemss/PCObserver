@@ -14,7 +14,7 @@ from .utils import (
     get_token,
     connect_to_pc,
     dynamic_data_filter,
-
+    send_turning_request
 )
 
 
@@ -95,5 +95,28 @@ async def send_app_info(client, callback_query):
     callback_data = callback_query.data
     _, user_id, app_id = callback_data.split("/")
     application_data = await get_application_data(user_id, app_id)
-    await callback_query.message.reply_text(f"{application_data}")
+    buttons = [InlineKeyboardButton("On🌝", callback_data=f"ON_/{user_id}/{app_id}"),
+               InlineKeyboardButton("Off🌚", callback_data=f"OFF_/{user_id}/{app_id}")]
+    keyboard = InlineKeyboardMarkup([buttons])
+    await callback_query.message.reply_text(f"{application_data}", reply_markup=keyboard)
+    await callback_query.answer()
+
+
+@Client.on_callback_query(dynamic_data_filter(r"^ON_/[0-9]+/[0-9]+$"))
+async def turn_on_app(client,callback_query):
+    callback_data = callback_query.data
+    _, user_id, app_id = callback_data.split("/")
+    message = await send_turning_request(user_id, app_id, command="On")
+    print(message)
+    await callback_query.message.reply_text(f"{message}")
+    await callback_query.answer()
+
+
+@Client.on_callback_query(dynamic_data_filter(r"^OFF_/[0-9]+/[0-9]+$"))
+async def turn_off_app(client,callback_query):
+    callback_data = callback_query.data
+    _, user_id, app_id = callback_data.split("/")
+    message = await send_turning_request(user_id, app_id, command="Off")
+    print(message)
+    await callback_query.message.reply_text(f"{message}")
     await callback_query.answer()

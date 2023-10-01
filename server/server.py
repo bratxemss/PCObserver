@@ -12,6 +12,7 @@ from server.command_handlers import (
     register_app,
     delete_app,
     send_response,
+    turn,
     add_to_favorite,
     remove_from_favorite
 )
@@ -82,7 +83,12 @@ class Server:
             # process commands from bot
             if command == "register_user":
                 await register_user(reader, writer, message)
-
+            elif command == "get_info":
+                await get_info(reader, writer, message)
+            elif command == "get_application_info":
+                await get_application_info(reader, writer, message)
+            elif command == "turn":
+                await turn(reader, writer, message, self.users)
             elif command == "connect":
                 if not await Customer.get_or_none(telegram_id=user_id):
                     await Customer.create_with_telegram_id(user_id)
