@@ -14,7 +14,7 @@ from .utils import (
     get_token,
     connect_to_pc,
     dynamic_data_filter,
-    send_turning_request
+    send_request_to_customer
 )
 
 
@@ -35,7 +35,8 @@ async def start(client, message):
     markup = ReplyKeyboardMarkup(
         [
             [KeyboardButton("🫡 Create Token")],
-            [KeyboardButton("✅ Connect to PC ✅")]
+            [KeyboardButton("✅ Connect to PC ✅")],
+            [KeyboardButton("🎶 Set up sound 🎶")]
         ],
         resize_keyboard=True
     )
@@ -56,6 +57,8 @@ async def start(client, message):
     (
         filters.regex(re.compile(r"^🫡 Create Token$"))
         | filters.regex(re.compile(r"^✅ Connect to PC ✅$"))
+        | filters.regex(re.compile(r"^🎶 Set up sound 🎶$"))
+
     ),
     group=1)
 async def process_operations(client, message):
@@ -72,7 +75,10 @@ async def process_operations(client, message):
             for app in buttons_info["applications"]:
                 app_name = app.get("name")
                 app_id = app.get("id")
-                button = [InlineKeyboardButton(app_name, callback_data=f"app_/{gm_id}/{app_id}")]
+                if app.get("favorite"):
+                    button = [InlineKeyboardButton(f"{app_name}⭐️", callback_data=f"app_/{gm_id}/{app_id}")]
+                else:
+                    button = [InlineKeyboardButton(f"{app_name}", callback_data=f"app_/{gm_id}/{app_id}")]
                 buttons.append(button)
 
             keyboard = InlineKeyboardMarkup(buttons)
@@ -86,7 +92,15 @@ async def process_operations(client, message):
                 gm_id,
                 message,
             )
-
+    elif message.text == "🎶 Set up sound 🎶":
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(f"Volume up", callback_data=f"Volume_up/{gm_id}")],
+                                         [InlineKeyboardButton(f"Volume down", callback_data=f"Volume_down/{gm_id}")]])
+        message = "🎶 Volume settings 🎶"
+        await client.send_message(
+            gm_id,
+            message,
+            reply_markup=keyboard
+        )
     return
 
 
@@ -102,21 +116,14 @@ async def send_app_info(client, callback_query):
     await callback_query.answer()
 
 
-@Client.on_callback_query(dynamic_data_filter(r"^ON_/[0-9]+/[0-9]+$"))
-async def turn_on_app(client,callback_query):
+@Client.on_callback_query(dynamic_data_filter(r"^(Volume_up|Volume_down)/[0-9]+$"))
+async def turn_app(client,callback_query):
     callback_data = callback_query.data
-    _, user_id, app_id = callback_data.split("/")
-    message = await send_turning_request(user_id, app_id, command="On")
-    print(message)
-    await callback_query.message.reply_text(f"{message}")
-    await callback_query.answer()
+    command, user_id = callback_data.split("/")
+    message = await send_request_to_customer(user_id, app_id=None, command=f"{command}")
+    if "✅" in message:
+        await callback_query.answer()
+    elif not "✅" in message:
+        await callback_query.message.reply_text(f"{message}")
+        await callback_query.answer()
 
-
-@Client.on_callback_query(dynamic_data_filter(r"^OFF_/[0-9]+/[0-9]+$"))
-async def turn_off_app(client,callback_query):
-    callback_data = callback_query.data
-    _, user_id, app_id = callback_data.split("/")
-    message = await send_turning_request(user_id, app_id, command="Off")
-    print(message)
-    await callback_query.message.reply_text(f"{message}")
-    await callback_query.answer()
