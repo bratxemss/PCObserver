@@ -31,13 +31,11 @@ class Client:
 
         while (message := await self.reader.read(1024)) != b'':
             response = message.decode()
-            print("message:", message)
-
             try:
                 data = json.loads(response)
             except:  # noqa
-                # TODO: write log
                 self.window.process_answer({"success": False, "message": "Invalid response from server!"})
+                self.window.logger.warning("Invalid response from server!")
                 break
 
             if not logged_in:
@@ -49,14 +47,26 @@ class Client:
                     for i in data["applications"]:
                         if i["favorite"]:
                             self.window.favorite_list.append(i)
-
                 logged_in = True
+            if "command" in data:
+                if logged_in:
+                    command = data.get("command")
+                    app_id = data.get("data", {}).get("app_id", None)
+                    if command == "ON_":
+                        self.window.turn_application(app_id=app_id, command=command)
+                    elif command == "OFF_":
+                        self.window.turn_application(app_id=app_id, command=command)
+                    elif command == "Volume_up":
+                        self.window.set_volume(command=command)
+                    elif command == "Volume_down":
+                        self.window.set_volume(command=command)
 
             if "applications" in data:
                 self.window.render_applications(data["applications"],label=self.window.list_of_apps)
+                self.window.apps = data["applications"]
                 self.window.render_applications(self.window.favorite_list, label=self.window.list_of_favorite_apps)
 
-        print("Connection closed.")
+        self.window.logger.warning("Connection closed")
         return
 
     async def send_message(self, message: dict):

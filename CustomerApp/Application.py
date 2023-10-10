@@ -1,6 +1,7 @@
 import asyncio
 import customtkinter as ctk
 import threading
+import logging
 import os
 import subprocess
 
@@ -10,10 +11,14 @@ from shlex import split
 from Client import Client
 
 
+
+
 class Window:
     def __init__(self):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
+        logging.basicConfig(filemode="console", encoding="utf-8", level=logging.INFO)
+        self.logger = logging.getLogger("Application ")
         self.window = ctk.CTk()
         self.window.geometry("800x600")
         self.window.title("PCO")
@@ -23,18 +28,24 @@ class Window:
         self.window.resizable(False, False)
 
         self.main_frame = ctk.CTkFrame(master=self.window, fg_color="#212121")
-        self.main_frame.grid(row=1, column=1, padx=20, pady=20, sticky="nsew")
+        self.main_frame.grid(row=1, column=1, columnspan=5, rowspan=5, padx=20, pady=20, sticky="nsew")
+        self.main_frame.columnconfigure(5, weight=1)
+        self.main_frame.rowconfigure(5, weight=1)
 
-        self.main_frame.grid_columnconfigure(3, weight=1)
-        self.main_frame.grid_rowconfigure(4, weight=1)
         #
+        self.button_restart_connection = ctk.CTkButton(master=self.window, text="Restart connection", width=12,
+                                               height=4)
+        self.button_restart_connection.grid(row=2, column=1, padx=30, pady=30,sticky="e")
+        self.button_restart_connection.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
+                                     hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
+                                     height=45)
+
+        self.error_label = ctk.CTkLabel(master=self.window, text="", font=("Robot", 16))
+        self.error_label.grid(row=0, column=1, padx=5, pady=15, sticky="nsew")
+
         img = ctk.CTkImage(Image.open("img/ss.png"), size=(100, 70))
         label_img = ctk.CTkLabel(master=self.window, image=img, text="")
         label_img.grid(row=0, column=1, padx=15, sticky="w")
-
-        self.error_label = ctk.CTkLabel(master=self.main_frame, text="", font=("Robot", 16))
-        self.error_label.grid(row=5, column=3, padx=5, pady=15, sticky="s")
-
         def on_closing():
             self.window.destroy()
 
@@ -44,6 +55,7 @@ class Window:
 class LoginWindow(Window):
     def __init__(self):
         super().__init__()
+        self.apps = None
         self.favorite_list = []
         self.button_delete = None
         self.thread_reader = None
@@ -56,18 +68,20 @@ class LoginWindow(Window):
         self.path_entry = None
         self.client = Client(self)
 
+
         self.label_login = ctk.CTkLabel(master=self.main_frame, text="Telegram ID", font=("Robot", 16))
         self.tg_login_entry = ctk.CTkEntry(master=self.main_frame, placeholder_text="Token", width=200)
         self.login_button = ctk.CTkButton(master=self.main_frame, text="Enter")
         self.checkbox = ctk.CTkCheckBox(master=self.main_frame, text="Remember Me")
 
-        self.label_login.grid(row=0, column=3, padx=5, pady=5, sticky="n")
-        self.tg_login_entry.grid(row=1, column=3, padx=5, pady=5, sticky="n")
-        self.login_button.grid(row=2, column=3, padx=5, pady=5, sticky="n")
-        self.checkbox.grid(row=3, column=3, padx=5, pady=5, sticky="n")
+        self.label_login.grid(row=0, column=5, padx=5, pady=5, sticky="n")
+        self.tg_login_entry.grid(row=1, column=5, padx=5, pady=5, sticky="n")
+        self.login_button.grid(row=2, column=5, padx=5, pady=5, sticky="n")
+        self.checkbox.grid(row=3, column=5, padx=5, pady=5, sticky="n")
 
         self.login_button.configure(command=self.login)
         self.values = None
+        self.read_save_file()
 
     def change_window(self):
         tabview = ctk.CTkTabview(master=self.main_frame)
@@ -84,9 +98,11 @@ class LoginWindow(Window):
         self.button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
         self.open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
 
+
         self.info_label = ctk.CTkLabel(text="", width=5, height=4, master=self.info_frame)
 
         self.path_entry = ctk.CTkEntry(master=path_frame, placeholder_text="Path")
+
         self.filter_entry = ctk.CTkEntry(tabview.tab("Application"), placeholder_text="Filter")
         self.list_of_apps = ctk.CTkOptionMenu(tabview.tab("Application"), values=["Applications"])
 
@@ -132,6 +148,7 @@ class LoginWindow(Window):
         self.button_add_to_favorite.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
         self.button_delete.grid(row=2, column=0, sticky="nsew", pady=10, padx=20)
 
+
         self.open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                      hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                      height=45)
@@ -151,20 +168,14 @@ class LoginWindow(Window):
                                        hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                        height=45)
 
-    def login(self):
-        # self.client.telegram_id = self.tg_login_entry.get()
-        self.client.telegram_id = "6174434600"
-
-        # TODO: решить проблему с созданием новых потоков
+    def login(self, telegram_id = None):
+        if not telegram_id:
+            telegram_id = self.tg_login_entry.get()
+        self.client.telegram_id = telegram_id
+        self.save()
         self.thread_reader = threading.Thread(target=self.client.run_connection, daemon=True)
         if not self.thread_reader.is_alive():
             self.thread_reader.start()
-
-    # def send_delete(self):
-    #     # example for testing
-    #     asyncio.run(
-    #         self.client.send_message({"command": "test", "data": {"user_id": 6174434600}})
-    #     )
 
     def process_answer(self, data):
         message = data.get("message")
@@ -183,18 +194,19 @@ class LoginWindow(Window):
         label.configure(values=[apps[i]["name"] for i in range(len(apps))])
 
     def set_functional(self, apps, telegram_id):
+
         self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(1,
                                                                              lambda: self.show_info
-                                                                             (event, apps=apps, list_of_app=self.list_of_apps, label=self.info_label)))
+                                                                             (event, list_of_app=self.list_of_apps, label=self.info_label)))
 
         self.filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.filter_entry,
-                                                                                 list_app=self.list_of_apps, apps=apps))
+                                                                                 list_app=self.list_of_apps))
         self.favorite_filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.favorite_filter_entry,
-                                                                                 list_app=self.list_of_favorite_apps, apps=apps))
+                                                                                 list_app=self.list_of_favorite_apps))
 
         self.list_of_favorite_apps.bind("<Button-1>", lambda event: self.window.after(1,
                                                                              lambda: self.show_info
-                                                                             (event, apps=apps, list_of_app=self.list_of_favorite_apps,label=self.info_label)))
+                                                                             (event, list_of_app=self.list_of_favorite_apps,label=self.info_label)))
 
         self.f_open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_favorite_apps))
         self.open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_apps))
@@ -202,10 +214,11 @@ class LoginWindow(Window):
         self.path_entry.bind('<Return>', lambda event: self.add_application(apps, telegram_id, label=self.list_of_apps))
         self.button_add_to_list.configure(command=lambda: self.add_application(apps, telegram_id=telegram_id,
                                                                                label=self.list_of_apps))
-        self.button_delete.configure(command=lambda: self.delete_application(apps, telegram_id,
+        self.button_delete.configure(command=lambda: self.delete_application(telegram_id,
                                                                              list_app=self.list_of_apps))
-        self.button_add_to_favorite.configure(command=lambda: self.add_to_favorite(telegram_id=telegram_id, apps=apps,))
-        self.delete_favorite_button.configure(command=lambda: self.remove_from_favorite(apps,telegram_id))
+        self.button_add_to_favorite.configure(command=lambda: self.add_to_favorite(telegram_id=telegram_id,))
+        self.delete_favorite_button.configure(command=lambda: self.remove_from_favorite(telegram_id))
+        self.button_restart_connection.configure(command=lambda: self.restart_connection())
 
     def open_path(self, event=None, list_app=None):
         current_selection_in_list = list_app.get()
@@ -214,12 +227,13 @@ class LoginWindow(Window):
         try:
             folder_path = os.path.dirname(file_path)
             subprocess.run(['explorer', folder_path])
+            self.logger.info(f'Opening path {folder_path}')
         except Exception as ex:
-            print(ex)
+            self.logger.warning(ex)
 
-    def show_info(self, event=None, apps=None,  list_of_app=None, label=None):
+    def show_info(self, event=None, list_of_app=None, label=None):
         try:
-            self.values = {apps[i]["name"]: [apps[i]["path"], self.size_reader(int(apps[i]["size"]))] for i in range(len(apps))}
+            self.values = {self.apps[i]["name"]: [self.apps[i]["path"], self.size_reader(int(self.apps[i]["size"]))] for i in range(len(self.apps))}
             current_selection_in_list = list_of_app.get()
             if current_selection_in_list:
                 data = [self.values[current_selection_in_list]][0]
@@ -227,12 +241,104 @@ class LoginWindow(Window):
                 label.configure(
                      text=f"Name: {current_selection_in_list}\nPath: {data[0]}\nSize of path folder: {data[1]}",
                      font=("Robot", 18))
-        except KeyError:
+        except Exception as ex:
+            self.logger.warning(f'{ex}')
+
+    def turn_application(self, app_id, command):
+        for i in self.apps:
+            if int(i["id"]) == int(app_id):
+                app_path = i["path"]
+                if command == "ON_" and not self.is_app_running(app_path):
+                    if app_path.endswith(".url"):
+                        from webbrowser import open
+                        open(self.get_url_from_file(app_path))
+                        success = True
+                        message = f"{i['name']} turned on"
+                    else:
+                        subprocess.Popen(app_path, shell=True)
+                        success = True
+                        message = f"{i['name']} turned on"
+                    self.logger.info(f"Turning on {i['name']} ---> {app_path}")
+                elif command == "OFF_" and self.is_app_running(app_path):
+                    if app_path.endswith(".url"):
+                        success = False
+                        message = "cant turning off the .url applications"
+                        self.logger.warning(message)
+                    else:
+                        self.kill(app_path)
+                        self.logger.info(f"Turning off {i['name']} ---> {app_path}")
+                        success = True
+                        message = f"{i['name']} turned off"
+                else:
+                    success = False
+                    message = f"{i['name']}conflict request"
+
+                self.process_answer(data={"success": success, "message": message})
+                break
+
+    def create_save_file(self, savedata):
+        user_folder = os.path.expanduser('~')
+        pco_folder = os.path.join(user_folder, 'PCO')
+        if not os.path.exists(pco_folder):
+            os.makedirs(pco_folder)
+        file_path = os.path.join(pco_folder, 'PCOSave.txt')
+        with open(file_path, 'w') as file:
+            file.write(savedata)
+        return pco_folder
+
+    def read_save_file(self):
+        user_folder = os.path.expanduser('~')
+        file_path = os.path.join(user_folder, 'PCO', 'PCOSave.txt')
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
+                content = file.read()
+                if content:
+                    self.tg_login_entry.insert(0,str(content))
+                else:
+                    pass
+        else:
             pass
 
-    def filter_listbox(self, apps, event=None, entry=None, list_app=None,):
+    def save(self):
+        try:
+            if self.checkbox.get():
+                info = self.create_save_file(self.client.telegram_id)
+                self.logger.info(f"New save file 'PCOSave.txt' was created in {info}")
+        except:
+            pass
+
+    def get_url_from_file(self, file_path):
+        from re import search
+        with open(file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+            url_match = search(r'URL=(.+)', content)
+            if url_match:
+                url = url_match.group(1)
+                return url
+            else:
+                return None
+
+    def kill(self, process_path):
+        from psutil import  process_iter
+        try:
+            self.logger.info(f'Killing processes with path: {process_path}')
+            processes = process_iter()
+            for process in processes:
+                try:
+                    process_info = process.as_dict(attrs=['pid', 'name', 'cmdline'])
+                    if process_info['cmdline']:
+                        for arg in process_info['cmdline']:
+                            if process_path in arg:
+                                self.logger.info(f'Found process: {process_info["name"]} | {process_info["cmdline"]}')
+                                process.terminate()
+                except Exception as ex:
+                    self.logger.warning(ex)
+        except Exception as ex:
+            self.logger.warning(ex)
+
+    def filter_listbox(self,event=None, entry=None, list_app=None,):
         user_input = entry.get()
-        current_values = [apps[i]["name"] for i in range(len(apps))]
+        current_values = [self.apps[i]["name"] for i in range(len(self.apps))]
         list_app.configure(values=[])
         filtered_items = []
         for item in current_values:
@@ -262,7 +368,7 @@ class LoginWindow(Window):
         file_path = self.path_entry.get()
         self.path_entry.delete(0, 'end')
         if self.is_valid_path(file_path):
-            file, file_path, file_size = self.get_file_info(file_path)
+            file, file_path, file_size= self.get_file_info(file_path)
             message = {
                 "command": command,
                 "data":
@@ -279,43 +385,43 @@ class LoginWindow(Window):
             }
             asyncio.run(
                 self.client.send_message(message))
-            print("request sended")
+            self.logger.info("request sent")
         self.render_applications(apps, label=label)
-        print("list updated")
-
+        self.logger.info("list updated")
         return
 
-    def delete_application(self, apps, telegram_id, list_app=None):
+    def delete_application(self, telegram_id, list_app=None):
         command = "delete_app"
         message = None
         current_selection_in_list = list_app.get()
-        print(list_app.cget("values"))
-        for item in apps:
-            if item["name"] == current_selection_in_list:
-                print(item["id"])
-                app_id = item["id"]
-                message = {
-                    "command": command,
-                    "data":
-                        {
-                            "user_id": telegram_id,
-                            "application": {
-                                "id": app_id
-                            }
-                        }}
-                apps.remove(item)
-                self.render_applications(apps, label=list_app)
-
+        for item in self.apps:
+            try:
+                if item["name"] == current_selection_in_list:
+                    app_id = item["id"]
+                    message = {
+                        "command": command,
+                        "data":
+                            {
+                                "user_id": telegram_id,
+                                "application": {
+                                    "id": app_id
+                                }
+                            }}
+                    self.apps.remove(item)
+                    self.render_applications(self.apps, label=list_app)
+                    self.logger.info(f"{item['name']} was deleted")
+            except Exception as ex:
+                self.logger.warning(ex)
         if message:
             asyncio.run(
                 self.client.send_message(message))
 
-    def add_to_favorite(self, apps, telegram_id, event=None ):
+    def add_to_favorite(self, telegram_id, event=None):
         try:
             message = None
             command = "add_to_favorite"
             current_selection_in_list = self.list_of_apps.get()
-            for item in apps:
+            for item in self.apps:
                 if item["name"] == current_selection_in_list and not item["favorite"]:
                     item["favorite"] = True
                     self.favorite_list.append(item)
@@ -329,6 +435,7 @@ class LoginWindow(Window):
                                     "id": app_id
                                 }
                             }}
+                    self.logger.info(f"{item['name']} was added to favorite")
 
             if message:
                 asyncio.run(
@@ -337,13 +444,13 @@ class LoginWindow(Window):
             self.list_of_favorite_apps.configure(
                 values=[item["name"] for item in self.favorite_list if item["favorite"]])
         except Exception as ex:
-            print(ex)
+            self.logger.warning(ex)
 
-    def remove_from_favorite(self,apps,telegram_id,event=None):
+    def remove_from_favorite(self,telegram_id,event=None):
         try:
             message = None
             command = "remove_from_favorite"
-            values = [apps[i] for i in range(len(apps)) if apps[i]["favorite"]]
+            values = [self.apps[i] for i in range(len(self.apps)) if self.apps[i]["favorite"]]
             current_selection_in_list = self.list_of_favorite_apps.get()
             for item in values:
                 if item["name"] == current_selection_in_list and item["favorite"]:
@@ -359,13 +466,14 @@ class LoginWindow(Window):
                                     "id": app_id
                                 }
                             }}
+                    self.logger.info(f"{item['name']} was removed from favorite")
             if message:
                 asyncio.run(
                     self.client.send_message(message))
             self.list_of_favorite_apps.configure(
                 values=[item["name"] for item in self.favorite_list if item["favorite"]])
         except Exception as ex:
-            print(ex)
+            self.logger.warning(ex)
 
     def is_valid_path(self, file_path):
         split_path = split(file_path)
@@ -374,6 +482,15 @@ class LoginWindow(Window):
             return True
         else:
             return False
+
+    def is_app_running(self,file_path):
+        from psutil import process_iter, AccessDenied
+        for proc in process_iter():
+            try:
+                if proc.exe() == file_path:
+                    return True
+            except AccessDenied:
+                pass
 
     def get_file_info(self, file_path):
         file_path = self.repeat_string(file_path)
@@ -386,21 +503,62 @@ class LoginWindow(Window):
                 shell = win32com.client.Dispatch("WScript.Shell")
                 file_path = shell.CreateShortCut(file_path).Targetpath
             except Exception as ex:
-                print(ex)
+                self.logger.warning(ex)
         elif file_path.endswith(".desktop"):  # linux
             import xdg.DesktopEntry
             try:
                 entry = xdg.DesktopEntry.DesktopEntry(file_path)
                 file_path = entry.getPath()
             except Exception as ex:
-                print(ex)
+                self.logger.warning(ex)
         for path, dirs, files in os.walk(os.path.dirname(file_path)):
             for f in files:
                 fp = os.path.join(path, f)
                 file_size += os.path.getsize(fp)
         file_path = os.path.abspath(file_path)
+
         print(file, file_path, file_size)
         return file, file_path, file_size
+
+    def restart_connection(self):
+        return self.login(self.client.telegram_id)
+
+    def set_volume(self, command):
+        from platform import system
+        if system() == 'Windows':
+            from ctypes import cast, POINTER
+            from comtypes import CLSCTX_ALL
+            from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+            devices = AudioUtilities.GetSpeakers()
+            interface = devices.Activate(
+                IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+            volume = cast(interface, POINTER(IAudioEndpointVolume))
+            current_volume = volume.GetMasterVolumeLevelScalar()
+            if command == "Volume_up":
+                new_volume = min(current_volume + 0.1, 1.0)
+                volume.SetMasterVolumeLevelScalar(new_volume, None)
+                self.logger.info("Volume increased by 0.1")
+            elif command == "Volume_down":
+                new_volume = max(current_volume - 0.1, 0.0)
+                volume.SetMasterVolumeLevelScalar(new_volume, None)
+                self.logger.info("Volume decreased by 0.1")
+        elif system() == 'Linux':
+            from pulsectl import Pulse
+            if command == "Volume_up":
+                with Pulse('increase_volume') as pulse:
+                    default_sink = pulse.sink_list()[0]
+                    current_volume = default_sink.volume.value_flat
+                    new_volume = min(current_volume + 0.1, 1.0)
+                    pulse.volume_set_all_chans(default_sink, new_volume)
+                    self.logger.info("Volume increased by 0.1")
+            elif command == "Volume_down":
+                with Pulse('increase_volume') as pulse:
+                    default_sink = pulse.sink_list()[0]
+                    current_volume = default_sink.volume.value_flat
+                    new_volume = max(current_volume - 0.1, 0.0)
+                    pulse.volume_set_all_chans(default_sink, new_volume)
+                    self.logger.info("Volume decreased by 0.1")
+
 
 
 if __name__ == "__main__":

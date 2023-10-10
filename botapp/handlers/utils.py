@@ -16,7 +16,7 @@ async def reader(message: dict, need_of_unexpected_info=True) -> str:
     unexpected_info = []
     answer = ""
     if message.get("message"):
-        answer += f"{message['message']}! "
+        answer += f"{message['message']}"
     if message.get("success"):
         answer = "✅ " + answer + "✅"
     elif not message.get("success"):
@@ -58,10 +58,18 @@ async def get_application_data(user_id, app_id):
     return await(reader(json.loads(response)))
 
 
-async def send_turning_request(user_id, app_id, command: str):
-    response = await bot.servers_client.send_message(command="turn", data={
-        "user_id": user_id,
-        "app_id": app_id,
-        "command": command
-    })
+async def send_request_to_customer(user_id, app_id, command: str):
+    if app_id:
+        response = await bot.servers_client.send_message(command="send_command", data={
+            "command": command,
+            "user_id": user_id,
+            "data": {
+                "app_id": app_id,
+            }
+        })
+    else:
+        response = await bot.servers_client.send_message(command="send_command", data={
+            "command": command,
+            "user_id": user_id,
+        })
     return await(reader(json.loads(response)))

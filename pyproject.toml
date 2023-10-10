@@ -28,6 +28,10 @@ sockio = "^0.15.0"
 customtkinter = "^5.2.0"
 pywin32 = "^306"
 pyxdg = "^0.28"
+psutil = "^5.9.5"
+sound = "^0.1.0"
+pycaw = "^20230407"
+pulsectl = "^23.5.2"
 
 [tool.pytest.ini_options]
 addopts = "-xslv"

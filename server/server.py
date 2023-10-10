@@ -12,7 +12,6 @@ from server.command_handlers import (
     register_app,
     delete_app,
     send_response,
-    turn,
     add_to_favorite,
     remove_from_favorite
 )
@@ -87,26 +86,27 @@ class Server:
                 await get_info(reader, writer, message)
             elif command == "get_application_info":
                 await get_application_info(reader, writer, message)
-            elif command == "turn":
-                await turn(reader, writer, message, self.users)
             elif command == "connect":
-                if not await Customer.get_or_none(telegram_id=user_id):
-                    await Customer.create_with_telegram_id(user_id)
+                if await Customer.get_or_none(telegram_id=user_id):
+                    self.users[str(user_id)] = {"writer": writer}
+                    logger.info(
+                        "New client connection: %s. Number of connected clients = %s",
+                        user_id,
+                        len(self.users)
+                    )
 
-                self.users[str(user_id)] = {"writer": writer}
-                logger.info(
-                    "New client connection: %s. Number of connected clients = %s",
-                    user_id,
-                    len(self.users)
-                )
+                    asyncio.create_task(self._listen_messages(reader, writer, user_id))
 
-                asyncio.create_task(self._listen_messages(reader, writer, user_id))
-
-                response = {
-                    "success": True,
-                    "message": "Connected successfully",
-                    "applications": await Application.get_apps_by_user(user_id)
-                }
+                    response = {
+                        "success": True,
+                        "message": "Connected successfully",
+                        "applications": await Application.get_apps_by_user(user_id)
+                    }
+                else:
+                    response = {
+                        "success": False,
+                        "message": "No such user",
+                    }
                 await send_response(writer, response, close_conn=False)
 
             elif command == "send_command":
@@ -114,8 +114,20 @@ class Server:
                 data = message.get("data", {})
                 user_id = str(data.get("user_id", None))
                 if user_id:
-                    user_writer = self.users[user_id]["writer"]
-                    await send_response(user_writer, data, close_conn=False)
+                    if user_id in self.users:
+                        user_writer = self.users[user_id]["writer"]
+                        await send_response(user_writer, data, close_conn=False)
+
+                        success = True
+                        message = "request was sent"
+                    else:
+                        success = False
+                        message = "Application is offline"
+                else:
+                    success = False
+                    message = "No such user in data"
+                response = {"success": success, "message": message}
+                await send_response(writer, response)
                 writer.close()
                 await writer.wait_closed()
         else:
