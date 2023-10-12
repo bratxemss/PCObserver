@@ -5,12 +5,9 @@ import logging
 import os
 import subprocess
 
-
 from PIL import Image
 from shlex import split
 from Client import Client
-
-
 
 
 class Window:
@@ -32,7 +29,6 @@ class Window:
         self.main_frame.columnconfigure(5, weight=1)
         self.main_frame.rowconfigure(5, weight=1)
 
-        #
         self.button_restart_connection = ctk.CTkButton(master=self.window, text="Restart connection", width=12,
                                                height=4)
         self.button_restart_connection.grid(row=2, column=1, padx=30, pady=30,sticky="e")
@@ -43,18 +39,20 @@ class Window:
         self.error_label = ctk.CTkLabel(master=self.window, text="", font=("Robot", 16))
         self.error_label.grid(row=0, column=1, padx=5, pady=15, sticky="nsew")
 
-        img = ctk.CTkImage(Image.open("img/ss.png"), size=(100, 70))
-        label_img = ctk.CTkLabel(master=self.window, image=img, text="")
+        self.img = Image.open("img/ss.png")
+        img_for_app = ctk.CTkImage(self.img, size=(100, 70))
+        label_img = ctk.CTkLabel(master=self.window, image=img_for_app, text="")
         label_img.grid(row=0, column=1, padx=15, sticky="w")
-        def on_closing():
-            self.window.destroy()
-
-        self.window.protocol("WM_DELETE_WINDOW", on_closing)
 
 
 class LoginWindow(Window):
     def __init__(self):
         super().__init__()
+        self.favorite_filter_entry = None
+        self.f_open_folder_button = None
+        self.delete_favorite_button = None
+        self.list_of_favorite_apps = None
+        self.button_add_to_favorite = None
         self.apps = None
         self.favorite_list = []
         self.button_delete = None
@@ -67,7 +65,6 @@ class LoginWindow(Window):
         self.info_frame = None
         self.path_entry = None
         self.client = Client(self)
-
 
         self.label_login = ctk.CTkLabel(master=self.main_frame, text="Telegram ID", font=("Robot", 16))
         self.tg_login_entry = ctk.CTkEntry(master=self.main_frame, placeholder_text="Token", width=200)
@@ -97,7 +94,6 @@ class LoginWindow(Window):
         self.button_delete = ctk.CTkButton(tabview.tab("Application"), text="Delete", width=12, height=4)
         self.button_add_to_list = ctk.CTkButton(master=path_frame, text="Add to list", width=12, height=4)
         self.open_folder_button = ctk.CTkButton(tabview.tab("Application"), text="Open path", width=12, height=4)
-
 
         self.info_label = ctk.CTkLabel(text="", width=5, height=4, master=self.info_frame)
 
@@ -148,7 +144,6 @@ class LoginWindow(Window):
         self.button_add_to_favorite.grid(row=1, column=0, sticky="nsew", pady=10, padx=20)
         self.button_delete.grid(row=2, column=0, sticky="nsew", pady=10, padx=20)
 
-
         self.open_folder_button.configure(corner_radius=7, border_width=1, border_spacing=2, fg_color="#909090",
                                      hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                      height=45)
@@ -168,7 +163,7 @@ class LoginWindow(Window):
                                        hover_color="#565656", text_color="#060D0D", font=("Robot", 15), width=80,
                                        height=45)
 
-    def login(self, telegram_id = None):
+    def login(self, telegram_id=None):
         if not telegram_id:
             telegram_id = self.tg_login_entry.get()
         self.client.telegram_id = telegram_id
@@ -194,7 +189,7 @@ class LoginWindow(Window):
         label.configure(values=[apps[i]["name"] for i in range(len(apps))])
 
     def set_functional(self, apps, telegram_id):
-
+        print(apps)
         self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(1,
                                                                              lambda: self.show_info
                                                                              (event, list_of_app=self.list_of_apps, label=self.info_label)))

@@ -9,10 +9,10 @@ async def test_server(client):
     assert response.get("message") == "User_id is missing."
 
 
-async def test_register_app(client):
+async def test_register_app(client, customer_db):
     user_id = 1235641635
     message = {"command": "connect", "data": {"user_id": user_id}}
-    await client.send_message(message)
+    assert await client.send_message(message)
 
     message = {
         "command": "register_app",
@@ -61,7 +61,7 @@ async def test_register_user(client):
     }
 
 
-async def test_get_application_info(client, application):
+async def test_get_application_info(client, application, customer_db):
     user_id = 1235641635
     message = {"command": "connect", "data": {"user_id": user_id}}
     await client.send_message(message)
@@ -82,7 +82,7 @@ async def test_get_application_info(client, application):
             await Application.get_app_by_id(message['data']['user_id'], message['data']['app_id']))
 
 
-async def test_get_info(client, application):
+async def test_get_info(client, application, customer_db):
     user_id = 1235641635
     message = {"command": "connect", "data": {"user_id": user_id}}
     await client.send_message(message)
@@ -102,7 +102,7 @@ async def test_get_info(client, application):
     assert response["applications"] == await Application.get_apps_by_user(message['data']['user_id'])
 
     
-async def test_delete_app(client, application):
+async def test_delete_app(client, application, customer_db):
     user_id = 1235641635
     message = {"command": "connect", "data": {"user_id": user_id}}
     await client.send_message(message)
@@ -126,7 +126,7 @@ async def test_delete_app(client, application):
     assert response["app_id"] == message["data"]["application"]["id"]
 
 
-async def test_add_to_favorite(client, application):
+async def test_add_to_favorite(client, application, customer_db):
     user_id = 1235641635
     application_id = 1
 
@@ -149,7 +149,7 @@ async def test_add_to_favorite(client, application):
     assert response["message"] == "Application successfully added to favorite"
 
 
-async def test_remove_from_favorite(client):
+async def test_remove_from_favorite(client, customer_db):
     await Application.create(
         user=1235641635,
         app_name="app_name",

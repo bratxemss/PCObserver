@@ -55,9 +55,9 @@ async def start(client, message):
 @Client.on_message(
     filters.text &
     (
-        filters.regex(re.compile(r"^🫡 Create Token$"))
-        | filters.regex(re.compile(r"^✅ Connect to PC ✅$"))
-        | filters.regex(re.compile(r"^🎶 Set up sound 🎶$"))
+            filters.regex(re.compile(r"^🫡 Create Token$"))
+            | filters.regex(re.compile(r"^✅ Connect to PC ✅$"))
+            | filters.regex(re.compile(r"^🎶 Set up sound 🎶$"))
 
     ),
     group=1)
@@ -116,14 +116,22 @@ async def send_app_info(client, callback_query):
     await callback_query.answer()
 
 
+@Client.on_callback_query(dynamic_data_filter(r"^(ON_|OFF_)/[0-9]+/[0-9]+$"))
+async def turn_app(client, callback_query):
+    callback_data = callback_query.data
+    command, user_id, app_id = callback_data.split("/")
+    message = await send_request_to_customer(user_id, app_id=app_id, command=f"{command}")
+    await callback_query.message.reply_text(f"{message}")
+    await callback_query.answer()
+
+
 @Client.on_callback_query(dynamic_data_filter(r"^(Volume_up|Volume_down)/[0-9]+$"))
-async def turn_app(client,callback_query):
+async def turn_app_sound(client, callback_query):
     callback_data = callback_query.data
     command, user_id = callback_data.split("/")
     message = await send_request_to_customer(user_id, app_id=None, command=f"{command}")
     if "✅" in message:
         await callback_query.answer()
-    elif not "✅" in message:
+    elif "✅" not in message:
         await callback_query.message.reply_text(f"{message}")
         await callback_query.answer()
-

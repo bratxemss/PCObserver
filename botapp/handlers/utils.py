@@ -18,9 +18,9 @@ async def reader(message: dict, need_of_unexpected_info=True) -> str:
     if message.get("message"):
         answer += f"{message['message']}"
     if message.get("success"):
-        answer = "✅ " + answer + "✅"
+        answer = "✅" + answer + "✅"
     elif not message.get("success"):
-        answer = "❌ " + answer + "❌"
+        answer = "❌" + answer + "❌"
     if need_of_unexpected_info:
         for item, key in message.items():
             if item != "message" and item != "success":

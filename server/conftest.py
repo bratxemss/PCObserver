@@ -57,7 +57,18 @@ async def db(server):
     await db.drop_tables()
     await db.disconnect()
 
-    
+
+@pytest.fixture()
+async def customer_db(db):
+    from .models import Customer
+    return await Customer.create(
+        telegram_id=1235641635,
+        user_token="user_token",
+        pc_token="pc_token",
+        pc_status="pc_statis"
+    )
+
+
 @pytest.fixture()
 async def application(db):
     from .models import Application

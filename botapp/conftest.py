@@ -49,3 +49,5 @@ async def server_client():
     with mock.patch("botapp.bot.servers_client.send_message") as mocked:
         mocked.return_value = response()
         yield mocked
+
+
