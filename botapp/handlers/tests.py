@@ -19,7 +19,8 @@ async def test_start(bot, send_message, tg_user):
                     "applications on your computer")
     assert "reply_markup" in kwargs
     keyboard = kwargs["reply_markup"].keyboard
-    assert len(keyboard) == 2
+    assert len(keyboard) == 3
     assert keyboard[0][0].text == '🫡 Create Token'
     assert keyboard[1][0].text == '✅ Connect to PC ✅'
-    assert keyboard[2][0].text == '🎶 Set up sound 🎶"'
+    assert keyboard[2][0].text == '🎶 Set up sound 🎶'
+
