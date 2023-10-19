@@ -189,7 +189,6 @@ class LoginWindow(Window):
         label.configure(values=[apps[i]["name"] for i in range(len(apps))])
 
     def set_functional(self, apps, telegram_id):
-        print(apps)
         self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(1,
                                                                              lambda: self.show_info
                                                                              (event, list_of_app=self.list_of_apps, label=self.info_label)))
@@ -553,7 +552,6 @@ class LoginWindow(Window):
                     new_volume = max(current_volume - 0.1, 0.0)
                     pulse.volume_set_all_chans(default_sink, new_volume)
                     self.logger.info("Volume decreased by 0.1")
-
 
 
 if __name__ == "__main__":

@@ -46,6 +46,5 @@ class Bot(Client):
         )
 
 
-# uvloop.install()
 
 bot = Bot()
