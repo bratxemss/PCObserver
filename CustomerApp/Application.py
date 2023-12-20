@@ -7,7 +7,11 @@ import subprocess
 
 from PIL import Image
 from shlex import split
+from pathlib import Path
+
 from Client import Client
+
+ROOT = Path(__file__).parent.absolute()
 
 
 class Window:
@@ -19,7 +23,7 @@ class Window:
         self.window = ctk.CTk()
         self.window.geometry("800x600")
         self.window.title("PCO")
-        self.window.iconbitmap("img/Logo.ico")
+        # self.window.iconbitmap(ROOT / "img/Logo.ico")
         self.window.columnconfigure(1, weight=1)
         self.window.rowconfigure(1, weight=1)
         self.window.resizable(False, False)
@@ -186,33 +190,49 @@ class LoginWindow(Window):
         self.error_label.configure(text=message, text_color=color)
 
     def render_applications(self, apps, label=None):
-        label.configure(values=[apps[i]["name"] for i in range(len(apps))])
+        if label:
+            label.configure(values=[apps[i]["name"] for i in range(len(apps))])
 
     def set_functional(self, apps, telegram_id):
-        self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(1,
-                                                                             lambda: self.show_info
-                                                                             (event, list_of_app=self.list_of_apps, label=self.info_label)))
-
-        self.filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.filter_entry,
+        if self.list_of_apps:
+            self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(
+                1,
+                lambda: self.show_info(event, list_of_app=self.list_of_apps, label=self.info_label))
+            )
+        if self.filter_entry:
+            self.filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.filter_entry,
                                                                                  list_app=self.list_of_apps))
-        self.favorite_filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.favorite_filter_entry,
+        if self.favorite_filter_entry:
+            self.favorite_filter_entry.bind("<KeyRelease>", lambda event: self.filter_listbox(event=event, entry=self.favorite_filter_entry,
                                                                                  list_app=self.list_of_favorite_apps))
 
-        self.list_of_favorite_apps.bind("<Button-1>", lambda event: self.window.after(1,
+        if self.list_of_favorite_apps:
+            self.list_of_favorite_apps.bind("<Button-1>", lambda event: self.window.after(1,
                                                                              lambda: self.show_info
                                                                              (event, list_of_app=self.list_of_favorite_apps,label=self.info_label)))
 
-        self.f_open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_favorite_apps))
-        self.open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_apps))
+        if self.f_open_folder_button:
+            self.f_open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_favorite_apps))
 
-        self.path_entry.bind('<Return>', lambda event: self.add_application(apps, telegram_id, label=self.list_of_apps))
-        self.button_add_to_list.configure(command=lambda: self.add_application(apps, telegram_id=telegram_id,
+        if self.open_folder_button:
+            self.open_folder_button.configure(command=lambda: self.open_path(list_app=self.list_of_apps))
+
+        if self.path_entry:
+            self.path_entry.bind('<Return>', lambda event: self.add_application(apps, telegram_id, label=self.list_of_apps))
+
+        if self.button_add_to_list:
+            self.button_add_to_list.configure(command=lambda: self.add_application(apps, telegram_id=telegram_id,
                                                                                label=self.list_of_apps))
-        self.button_delete.configure(command=lambda: self.delete_application(telegram_id,
-                                                                             list_app=self.list_of_apps))
-        self.button_add_to_favorite.configure(command=lambda: self.add_to_favorite(telegram_id=telegram_id,))
-        self.delete_favorite_button.configure(command=lambda: self.remove_from_favorite(telegram_id))
-        self.button_restart_connection.configure(command=lambda: self.restart_connection())
+        if self.button_delete:
+            self.button_delete.configure(command=lambda: self.delete_application(
+                telegram_id, list_app=self.list_of_apps)
+            )
+        if self.button_add_to_favorite:
+            self.button_add_to_favorite.configure(command=lambda: self.add_to_favorite(telegram_id=telegram_id,))
+        if self.delete_favorite_button:
+            self.delete_favorite_button.configure(command=lambda: self.remove_from_favorite(telegram_id))
+        if self.button_restart_connection:
+            self.button_restart_connection.configure(command=lambda: self.restart_connection())
 
     def open_path(self, event=None, list_app=None):
         current_selection_in_list = list_app.get()
@@ -362,7 +382,7 @@ class LoginWindow(Window):
         file_path = self.path_entry.get()
         self.path_entry.delete(0, 'end')
         if self.is_valid_path(file_path):
-            file, file_path, file_size= self.get_file_info(file_path)
+            file, file_path, file_size = self.get_file_info(file_path)
             message = {
                 "command": command,
                 "data":
@@ -519,6 +539,7 @@ class LoginWindow(Window):
 
     def set_volume(self, command):
         from platform import system
+
         if system() == 'Windows':
             from ctypes import cast, POINTER
             from comtypes import CLSCTX_ALL
@@ -529,11 +550,11 @@ class LoginWindow(Window):
             volume = cast(interface, POINTER(IAudioEndpointVolume))
             current_volume = volume.GetMasterVolumeLevelScalar()
             if command == "Volume_up":
-                new_volume = min(current_volume + 0.1, 1.0)
+                new_volume = min(current_volume + 1, 1.0)
                 volume.SetMasterVolumeLevelScalar(new_volume, None)
                 self.logger.info("Volume increased by 0.1")
             elif command == "Volume_down":
-                new_volume = max(current_volume - 0.1, 0.0)
+                new_volume = max(current_volume - 1, 0.0)
                 volume.SetMasterVolumeLevelScalar(new_volume, None)
                 self.logger.info("Volume decreased by 0.1")
         elif system() == 'Linux':
@@ -541,17 +562,19 @@ class LoginWindow(Window):
             if command == "Volume_up":
                 with Pulse('increase_volume') as pulse:
                     default_sink = pulse.sink_list()[0]
-                    current_volume = default_sink.volume.value_flat
-                    new_volume = min(current_volume + 0.1, 1.0)
-                    pulse.volume_set_all_chans(default_sink, new_volume)
-                    self.logger.info("Volume increased by 0.1")
+                    for s in pulse.sink_list():
+                        current_volume = s.volume.value_flat
+                        new_volume = min(current_volume + 0.1, 0.9)
+                        pulse.volume_set_all_chans(s, new_volume)
+                        self.logger.info("Volume increased by 0.1")
             elif command == "Volume_down":
                 with Pulse('increase_volume') as pulse:
                     default_sink = pulse.sink_list()[0]
-                    current_volume = default_sink.volume.value_flat
-                    new_volume = max(current_volume - 0.1, 0.0)
-                    pulse.volume_set_all_chans(default_sink, new_volume)
-                    self.logger.info("Volume decreased by 0.1")
+                    for s in pulse.sink_list():
+                        current_volume = s.volume.value_flat
+                        new_volume = max(current_volume - 0.1, 0.0)
+                        pulse.volume_set_all_chans(s, new_volume)
+                        self.logger.info("Volume decreased by 0.1")
 
 
 if __name__ == "__main__":

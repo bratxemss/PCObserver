@@ -28,7 +28,6 @@ class Client:
         await self.writer.drain()
 
         logged_in = False
-
         while (message := await self.reader.read(1024)) != b'':
             response = message.decode()
             try:
@@ -62,7 +61,7 @@ class Client:
                         self.window.set_volume(command=command)
 
             if "applications" in data:
-                self.window.render_applications(data["applications"],label=self.window.list_of_apps)
+                self.window.render_applications(data["applications"], label=self.window.list_of_apps)
                 self.window.apps = data["applications"]
                 self.window.render_applications(self.window.favorite_list, label=self.window.list_of_favorite_apps)
 
