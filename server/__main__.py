@@ -16,7 +16,7 @@ def args_parser():
 
 async def main():
     app = Server()
-    await app.start_server('127.0.0.1', 8000)
+    await app.start_server('0.0.0.0', 8000)
 
 
 if __name__ == "__main__":
