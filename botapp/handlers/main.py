@@ -45,7 +45,10 @@ async def start(client, message):
             message.from_user.id,
             text=f"Hello, {message.from_user.first_name}! I am the test bot 'P.C.Observer'. "
                  "My job is to turn on and off the "
-                 "applications on your computer",
+                 "applications on your computer.\n"
+                 "Please, download my application for PC here "
+                 "https://drive.google.com/file/d/1SFMG6sQuOd92P6pzhY9BdFjvappq5UZF/view"
+                 " (unpack files and run Application.exe)",
             reply_markup=markup
         )
     )
