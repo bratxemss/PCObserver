@@ -14,6 +14,10 @@ from Client import Client
 ROOT = Path(__file__).parent.absolute()
 
 
+fl = open("logs.txt", "w")
+fl.write("CREATED logs.txt FILE\n")
+
+
 class Window:
     def __init__(self):
         ctk.set_appearance_mode("dark")
@@ -52,6 +56,7 @@ class Window:
 class LoginWindow(Window):
     def __init__(self):
         super().__init__()
+
         self.favorite_filter_entry = None
         self.f_open_folder_button = None
         self.delete_favorite_button = None
@@ -194,6 +199,7 @@ class LoginWindow(Window):
             label.configure(values=[apps[i]["name"] for i in range(len(apps))])
 
     def set_functional(self, apps, telegram_id):
+        fl.write("\nSET FUNCTIONALITY\n")
         if self.list_of_apps:
             self.list_of_apps.bind("<Button-1>", lambda event: self.window.after(
                 1,
@@ -220,7 +226,9 @@ class LoginWindow(Window):
         if self.path_entry:
             self.path_entry.bind('<Return>', lambda event: self.add_application(apps, telegram_id, label=self.list_of_apps))
 
+        fl.write("\nINIT 'Add to list' BTN\n")
         if self.button_add_to_list:
+            fl.write("\nINITED 'Add to list' BTN\n")
             self.button_add_to_list.configure(command=lambda: self.add_application(apps, telegram_id=telegram_id,
                                                                                label=self.list_of_apps))
         if self.button_delete:
@@ -333,7 +341,7 @@ class LoginWindow(Window):
                 return None
 
     def kill(self, process_path):
-        from psutil import  process_iter
+        from psutil import process_iter
         try:
             self.logger.info(f'Killing processes with path: {process_path}')
             processes = process_iter()
@@ -378,6 +386,7 @@ class LoginWindow(Window):
         return string.strip('"')
 
     def add_application(self, apps, telegram_id, label=None):
+        fl.write("\nPUSHED 'Add to list' BTN\n")
         command = "register_app"
         file_path = self.path_entry.get()
         self.path_entry.delete(0, 'end')
@@ -550,11 +559,11 @@ class LoginWindow(Window):
             volume = cast(interface, POINTER(IAudioEndpointVolume))
             current_volume = volume.GetMasterVolumeLevelScalar()
             if command == "Volume_up":
-                new_volume = min(current_volume + 1, 1.0)
+                new_volume = min(current_volume + 0.05, 1.0)
                 volume.SetMasterVolumeLevelScalar(new_volume, None)
                 self.logger.info("Volume increased by 0.1")
             elif command == "Volume_down":
-                new_volume = max(current_volume - 1, 0.0)
+                new_volume = max(current_volume - 0.05, 0.0)
                 volume.SetMasterVolumeLevelScalar(new_volume, None)
                 self.logger.info("Volume decreased by 0.1")
         elif system() == 'Linux':
@@ -564,7 +573,7 @@ class LoginWindow(Window):
                     default_sink = pulse.sink_list()[0]
                     for s in pulse.sink_list():
                         current_volume = s.volume.value_flat
-                        new_volume = min(current_volume + 0.1, 0.9)
+                        new_volume = min(current_volume + 0.05, 0.9)
                         pulse.volume_set_all_chans(s, new_volume)
                         self.logger.info("Volume increased by 0.1")
             elif command == "Volume_down":
@@ -572,7 +581,7 @@ class LoginWindow(Window):
                     default_sink = pulse.sink_list()[0]
                     for s in pulse.sink_list():
                         current_volume = s.volume.value_flat
-                        new_volume = max(current_volume - 0.1, 0.0)
+                        new_volume = max(current_volume - 0.05, 0.0)
                         pulse.volume_set_all_chans(s, new_volume)
                         self.logger.info("Volume decreased by 0.1")
 
@@ -580,3 +589,4 @@ class LoginWindow(Window):
 if __name__ == "__main__":
     app = LoginWindow()
     app.window.mainloop()
+    fl.close()
