@@ -32,6 +32,7 @@ sound = "^0.1.0"
 pycaw = "^20230407"
 pulsectl = "^23.5.2"
 pywin32 = {version = "^306", platform = "windows"}
+cx-freeze = "^6.15.12"
 
 [tool.pytest.ini_options]
 addopts = "-xslv"
