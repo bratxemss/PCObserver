@@ -71,7 +71,7 @@ class LoginWindow(Window):
         self.client = Client(self)
 
         self.label_login = ctk.CTkLabel(master=self.main_frame, text="Telegram ID", font=("Robot", 16))
-        self.tg_login_entry = ctk.CTkEntry(master=self.main_frame, placeholder_text="Token", width=200)
+        self.tg_login_entry = ctk.CTkEntry(master=self.main_frame, placeholder_text="Telegram id", width=200)
         self.login_button = ctk.CTkButton(master=self.main_frame, text="Enter")
         self.checkbox = ctk.CTkCheckBox(master=self.main_frame, text="Remember Me")
 
